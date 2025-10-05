@@ -13,6 +13,8 @@ dependencies:
   # 👇 Add these new dependencies here
   sqflite: ^2.2.8+4
   path: ^1.8.3
+  http: ^1.2.0
+  url_launcher: ^6.1.10
 
   cupertino_icons: ^1.0.8
 
