@@ -1,20 +1,16 @@
-import 'dart:io';
+//import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/splash_screen.dart';
-import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
+//import 'package:path/path.dart';
+//import 'package:sqflite/sqflite.dart';
 import 'db/database_helper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // 🔹 Delete old database for a fresh start (optional, dev only)
-  final dbPath = join(await getDatabasesPath(), 'app.db');
-  if (await File(dbPath).exists()) {
-    await deleteDatabase(dbPath);
-    print("🗑️ Old database deleted for fresh start");
-  }
+
 
   // 🔹 Initialize database
   final db = await DatabaseHelper().database;

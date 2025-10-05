@@ -10,21 +10,26 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # 👇 Add these new dependencies here
+  # 💾 Database
   sqflite: ^2.2.8+4
   path: ^1.8.3
 
+  # 🔒 Password hashing
+  bcrypt: ^1.1.3
+
+  # 🎨 UI Enhancements
+  google_fonts: ^6.2.1
+  fluttertoast: ^8.2.6
   cupertino_icons: ^1.0.8
+  mailer: ^6.1.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
-
 
   assets:
     - assets/images/
