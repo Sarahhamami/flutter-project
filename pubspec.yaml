@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  device_preview: ^1.1.0
 
   # 💾 Database
   sqflite: ^2.2.8+4
@@ -23,6 +24,18 @@ dependencies:
   cupertino_icons: ^1.0.8
   mailer: ^6.1.0
 
+  # 🧠 State Management
+  provider: ^6.1.1
+
+  # 📊 Charts
+  fl_chart: ^0.66.2
+
+  # 📅 Date & Time
+  intl: ^0.20.2
+
+  # 🎭 Animations
+  lottie: ^2.7.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -33,3 +46,5 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/animations/
+    - assets/data/

@@ -21,12 +21,12 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 3, // Version augmentée à 3 pour toutes les tables
       onCreate: _onCreate,
     );
   }
 
-  Future _onCreate(Database db, int version) async {
+  Future<void> _onCreate(Database db, int version) async {
     // 1️⃣ Table Utilisateur
     await db.execute('''
       CREATE TABLE Utilisateur(
@@ -74,6 +74,73 @@ class DatabaseHelper {
     ''');
     print("✅ Table Disponibilite created");
 
+    // 4️⃣ Table Sleep (Suivi du sommeil)
+    await db.execute('''
+      CREATE TABLE Sleep(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        date TEXT NOT NULL,
+        bedTime TEXT NOT NULL,
+        wakeUpTime TEXT NOT NULL,
+        sleepDuration REAL NOT NULL,
+        sleepQuality TEXT NOT NULL,
+        FOREIGN KEY(user_id) REFERENCES Utilisateur(user_id)
+      )
+    ''');
+    print("✅ Table Sleep created");
+
+    // 5️⃣ Table Mood (Suivi de l'humeur)
+    await db.execute('''
+      CREATE TABLE Mood(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        date TEXT NOT NULL,
+        stressLevel INTEGER NOT NULL,
+        mood TEXT NOT NULL,
+        energyLevel INTEGER NOT NULL,
+        FOREIGN KEY(user_id) REFERENCES Utilisateur(user_id)
+      )
+    ''');
+    print("✅ Table Mood created");
+
+    // 6️⃣ Table Cycle (Suivi menstruel)
+    await db.execute('''
+      CREATE TABLE Cycle(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        cycleStartDate TEXT NOT NULL,
+        cycleEndDate TEXT NOT NULL,
+        symptoms TEXT,
+        FOREIGN KEY(user_id) REFERENCES Utilisateur(user_id)
+      )
+    ''');
+    print("✅ Table Cycle created");
+
+    // 7️⃣ Table Recommendation (Recommandations IA)
+    await db.execute('''
+      CREATE TABLE Recommendation(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        date TEXT NOT NULL,
+        type TEXT NOT NULL,
+        message TEXT NOT NULL,
+        FOREIGN KEY(user_id) REFERENCES Utilisateur(user_id)
+      )
+    ''');
+    print("✅ Table Recommendation created");
+
+    // 8️⃣ Table LifestyleLog (Activités physiques)
+    await db.execute('''
+      CREATE TABLE LifestyleLog(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        date TEXT NOT NULL,
+        physicalActivity TEXT NOT NULL,
+        nutrition TEXT,
+        screenTime REAL NOT NULL,
+        FOREIGN KEY(user_id) REFERENCES Utilisateur(user_id)
+      )
+    ''');
+    print("✅ Table LifestyleLog created");
   }
-  
 }
