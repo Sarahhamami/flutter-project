@@ -64,4 +64,13 @@ Future<void> updatePassword(String email, String newHashedPassword) async {
       whereArgs: [email],
     );
   }
+  Future<List<Map<String, dynamic>>> getAllDoctors() async {
+  final db = await _dbHelper.database;
+  final result = await db.query(
+    'Utilisateur',
+    where: 'role = ?',
+    whereArgs: ['Doctor'],
+  );
+  return result;
+}
 }

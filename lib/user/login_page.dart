@@ -6,6 +6,7 @@ import 'package:flutter_application_1/user/signup.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:bcrypt/bcrypt.dart';
 import '../repositories/user_repository.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 class LoginPage extends StatefulWidget {
@@ -22,6 +23,7 @@ class _LoginPageState extends State<LoginPage> {
   final _userRepo = UserRepository();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _rememberMe = false;
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
@@ -57,6 +59,12 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
     CurrentUser().setUser(user);
+    final prefs = await SharedPreferences.getInstance();
+if (_rememberMe) {
+  await prefs.setString('remembered_email', email);
+} else {
+  await prefs.remove('remembered_email');
+}
     // ✅ Login successful → go to HomePage
     Navigator.pushReplacement(
       context,
@@ -91,6 +99,19 @@ class _LoginPageState extends State<LoginPage> {
                 _buildTextField(_emailController, "Email",
                     type: TextInputType.emailAddress),
                 _buildPasswordField(_passwordController, "Password"),
+                Row(
+  children: [
+    Checkbox(
+      value: _rememberMe,
+      onChanged: (value) {
+        setState(() {
+          _rememberMe = value!;
+        });
+      },
+    ),
+    const Text("Remember Me"),
+  ],
+),
                 const SizedBox(height: 25),
             _isLoading
     ? const CircularProgressIndicator(color: blue)

@@ -13,7 +13,7 @@ dependencies:
   # 💾 Database
   sqflite: ^2.2.8+4
   path: ^1.8.3
-
+  shared_preferences: ^2.1.1
   # 🔒 Password hashing
   bcrypt: ^1.1.3
 
