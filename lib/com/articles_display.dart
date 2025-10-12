@@ -3,6 +3,7 @@ import '../models/article.dart';
 import '../services/news_service.dart';
 import 'article_detail.dart';
 import 'forum_page.dart';
+import 'chat_page.dart';
 
 // Palette
 const Color kWhite = Colors.white;
@@ -57,8 +58,15 @@ class _ArticlesDisplayState extends State<ArticlesDisplay> {
       case 1: // Search
         // Add search functionality here if needed
         break;
-      case 2: // Bookmark
-        // Add bookmark functionality here if needed
+      case 2: // Chat
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ChatPage()),
+        );
+        // Reset to home tab after navigation
+        setState(() {
+          _selectedIndex = 0;
+        });
         break;
       case 3: // Forum
         Navigator.push(
@@ -489,7 +497,7 @@ class _ArticlesDisplayState extends State<ArticlesDisplay> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    Icons.bookmark_border,
+                    Icons.chat_bubble_outline,
                     color: _selectedIndex == 2 ? kPrimary : kDark.withOpacity(0.5),
                   ),
                 ),
