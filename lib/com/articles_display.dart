@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/article.dart';
 import '../services/news_service.dart';
 import 'article_detail.dart';
+import 'forum_page.dart';
 
 // Palette
 const Color kWhite = Colors.white;
@@ -21,6 +22,7 @@ class _ArticlesDisplayState extends State<ArticlesDisplay> {
   late Future<List<Article>> _futureNews;
   late PageController _pageController;
   int _currentCarouselPage = 0;
+  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -41,6 +43,37 @@ class _ArticlesDisplayState extends State<ArticlesDisplay> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    
+    // Handle navigation for different tabs
+    switch (index) {
+      case 0: // Home - already showing
+        break;
+      case 1: // Search
+        // Add search functionality here if needed
+        break;
+      case 2: // Bookmark
+        // Add bookmark functionality here if needed
+        break;
+      case 3: // Forum
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ForumPage()),
+        );
+        // Reset to home tab after navigation
+        setState(() {
+          _selectedIndex = 0;
+        });
+        break;
+      case 4: // Profile
+        // Add profile functionality here if needed
+        break;
+    }
   }
 
   @override
@@ -94,12 +127,29 @@ class _ArticlesDisplayState extends State<ArticlesDisplay> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _TabButton(label: 'Feeds', selected: true),
-                    _TabButton(label: 'Popular'),
-                    _TabButton(label: 'Following'),
+                    _TabButton(
+                      label: 'Feeds', 
+                      selected: true,
+                      onTap: () {},
+                    ),
+                    _TabButton(
+                      label: 'Forum',
+                      selected: false,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const ForumPage()),
+                        );
+                      },
+                    ),
+                    _TabButton(
+                      label: 'Following',
+                      selected: false,
+                      onTap: () {},
+                    ),
                   ],
                 ),
               ),
@@ -284,13 +334,15 @@ class _ArticlesDisplayState extends State<ArticlesDisplay> {
             BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: ''),
             BottomNavigationBarItem(icon: Icon(Icons.search), label: ''),
             BottomNavigationBarItem(icon: Icon(Icons.bookmark_border), label: ''),
+            BottomNavigationBarItem(icon: Icon(Icons.local_hospital), label: ''),
             BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: ''),
           ],
-          currentIndex: 0,
+          currentIndex: _selectedIndex,
           selectedItemColor: Colors.black,
           unselectedItemColor: Colors.black38,
           showSelectedLabels: false,
           showUnselectedLabels: false,
+          onTap: _onItemTapped,
         ),
       ),
     );
@@ -322,21 +374,25 @@ class _Tag extends StatelessWidget {
 class _TabButton extends StatelessWidget {
   final String label;
   final bool selected;
-  const _TabButton({required this.label, this.selected = false});
+  final VoidCallback? onTap;
+  const _TabButton({required this.label, this.selected = false, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: selected ? kPrimary : Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: selected ? kWhite : kDark,
-          fontWeight: FontWeight.w600,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? kPrimary : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? kWhite : kDark,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );

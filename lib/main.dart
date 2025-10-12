@@ -10,11 +10,11 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // 🔹 Delete old database for a fresh start (optional, dev only)
-  final dbPath = join(await getDatabasesPath(), 'app.db');
+ /* final dbPath = join(await getDatabasesPath(), 'app.db');
   if (await File(dbPath).exists()) {
     await deleteDatabase(dbPath);
     print("🗑️ Old database deleted for fresh start");
-  }
+  }*/
 
   // 🔹 Initialize database
   final db = await DatabaseHelper().database;
