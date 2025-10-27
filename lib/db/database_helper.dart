@@ -21,9 +21,43 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
+  }
+
+  Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Add chat tables
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS ChatConversation(
+          conversation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user1_id INTEGER NOT NULL,
+          user2_id INTEGER NOT NULL,
+          last_message TEXT,
+          last_message_time TEXT,
+          FOREIGN KEY(user1_id) REFERENCES Utilisateur(user_id),
+          FOREIGN KEY(user2_id) REFERENCES Utilisateur(user_id)
+        )
+      ''');
+
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS ChatMessage(
+          message_id INTEGER PRIMARY KEY AUTOINCREMENT,
+          conversation_id INTEGER NOT NULL,
+          sender_id INTEGER NOT NULL,
+          receiver_id INTEGER NOT NULL,
+          content TEXT NOT NULL,
+          is_read INTEGER DEFAULT 0,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY(conversation_id) REFERENCES ChatConversation(conversation_id),
+          FOREIGN KEY(sender_id) REFERENCES Utilisateur(user_id),
+          FOREIGN KEY(receiver_id) REFERENCES Utilisateur(user_id)
+        )
+      ''');
+      print("✅ Chat tables added via upgrade");
+    }
   }
 
   Future _onCreate(Database db, int version) async {
@@ -97,6 +131,36 @@ await db.execute('''
   )
 ''');
 print("✅ Table ForumPost created");
+
+// Chat tables
+await db.execute('''
+  CREATE TABLE ChatConversation(
+    conversation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user1_id INTEGER NOT NULL,
+    user2_id INTEGER NOT NULL,
+    last_message TEXT,
+    last_message_time TEXT,
+    FOREIGN KEY(user1_id) REFERENCES Utilisateur(user_id),
+    FOREIGN KEY(user2_id) REFERENCES Utilisateur(user_id)
+  )
+''');
+print("✅ Table ChatConversation created");
+
+await db.execute('''
+  CREATE TABLE ChatMessage(
+    message_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    conversation_id INTEGER NOT NULL,
+    sender_id INTEGER NOT NULL,
+    receiver_id INTEGER NOT NULL,
+    content TEXT NOT NULL,
+    is_read INTEGER DEFAULT 0,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY(conversation_id) REFERENCES ChatConversation(conversation_id),
+    FOREIGN KEY(sender_id) REFERENCES Utilisateur(user_id),
+    FOREIGN KEY(receiver_id) REFERENCES Utilisateur(user_id)
+  )
+''');
+print("✅ Table ChatMessage created");
 await db.execute('''
   CREATE TABLE Advice(
     advice_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -301,32 +365,63 @@ print("✅ Table ActivitePas created");
 
   Future<void> _createDefaultUser(Database db) async {
     try {
-      // Check if default user already exists
-      final existingUser = await db.query(
-        'Utilisateur',
-        where: 'email = ?',
-        whereArgs: ['default@healthtracker.com'],
-      );
-
-      if (existingUser.isEmpty) {
-        await db.insert('Utilisateur', {
+      // Test users data
+      final testUsers = [
+        {
           'nom': 'Default',
           'prenom': 'User',
           'email': 'default@healthtracker.com',
-          'mot_de_passe': 'password123', // In real app, this should be hashed
+          'mot_de_passe': 'password123',
           'telephone': '+1234567890',
           'date_naissance': '1990-01-01',
           'sexe': 'Other',
           'adresse': 'Default Address',
           'role': 'patient',
           'specialite': null,
-        });
-        print("✅ Default user created");
-      } else {
-        print("✅ Default user already exists");
+        },
+        {
+          'nom': 'Smith',
+          'prenom': 'John',
+          'email': 'john@test.com',
+          'mot_de_passe': 'password123',
+          'telephone': '+1987654321',
+          'date_naissance': '1985-05-15',
+          'sexe': 'Male',
+          'adresse': 'Test Address 1',
+          'role': 'patient',
+          'specialite': null,
+        },
+        {
+          'nom': 'Johnson',
+          'prenom': 'Emma',
+          'email': 'emma@test.com',
+          'mot_de_passe': 'password123',
+          'telephone': '+1555123456',
+          'date_naissance': '1992-08-22',
+          'sexe': 'Female',
+          'adresse': 'Test Address 2',
+          'role': 'doctor',
+          'specialite': 'Cardiology',
+        },
+      ];
+
+      for (var userData in testUsers) {
+        // Check if user already exists
+        final existingUser = await db.query(
+          'Utilisateur',
+          where: 'email = ?',
+          whereArgs: [userData['email']],
+        );
+
+        if (existingUser.isEmpty) {
+          await db.insert('Utilisateur', userData);
+          print("✅ User created: ${userData['prenom']} ${userData['nom']} (${userData['email']})");
+        } else {
+          print("✅ User already exists: ${userData['email']}");
+        }
       }
     } catch (e) {
-      print("❌ Error creating default user: $e");
+      print("❌ Error creating test users: $e");
     }
   }
 
@@ -497,8 +592,16 @@ print("✅ Table ActivitePas created");
     };
   }
 
-  // Get default user ID for testing
+  // Get default user ID for testing - CHANGE THIS TO SWITCH USERS
   Future<int> getDefaultUserId() async {
+    // For testing different users, change this return value
+    // User 1: return 1
+    // User 2: return 2
+    // User 3: return 3
+    return 2; // Change this number to test as different users
+
+    // Uncomment below to use actual database lookup
+    /*
     final db = await database;
     final result = await db.query(
       'Utilisateur',
@@ -506,7 +609,7 @@ print("✅ Table ActivitePas created");
       whereArgs: ['default@healthtracker.com'],
       columns: ['user_id'],
     );
-    
+
     if (result.isNotEmpty) {
       return result.first['user_id'] as int;
     } else {
@@ -520,6 +623,7 @@ print("✅ Table ActivitePas created");
       );
       return newResult.first['user_id'] as int;
     }
+    */
   }
 
   // Clear any existing sample topics (optional - for clean start)
@@ -546,6 +650,160 @@ print("✅ Table ActivitePas created");
     } catch (e) {
       print("❌ Error clearing sample topics: $e");
     }
+  }
+
+  // User Operations - Get all users for friends list
+  Future<List<Map<String, dynamic>>> getAllUsers() async {
+    final db = await database;
+    return await db.query(
+      'Utilisateur',
+      columns: ['user_id', 'nom', 'prenom', 'email', 'role'],
+      orderBy: 'nom, prenom ASC',
+    );
+  }
+
+  // Get user by ID
+  Future<Map<String, dynamic>?> getUserById(int userId) async {
+    final db = await database;
+    final result = await db.query(
+      'Utilisateur',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+    );
+    
+    return result.isNotEmpty ? result.first : null;
+  }
+
+  // Get user by email
+  Future<Map<String, dynamic>?> getUserByEmail(String email) async {
+    final db = await database;
+    final result = await db.query(
+      'Utilisateur',
+      where: 'email = ?',
+      whereArgs: [email],
+    );
+    
+    return result.isNotEmpty ? result.first : null;
+  }
+
+  // Search users by name
+  Future<List<Map<String, dynamic>>> searchUsers(String query) async {
+    final db = await database;
+    return await db.query(
+      'Utilisateur',
+      columns: ['user_id', 'nom', 'prenom', 'email', 'role'],
+      where: 'nom LIKE ? OR prenom LIKE ? OR email LIKE ?',
+      whereArgs: ['%$query%', '%$query%', '%$query%'],
+      orderBy: 'nom, prenom ASC',
+    );
+  }
+
+  // ==================== CHAT OPERATIONS ====================
+  
+  // Get or create a conversation between two users
+  Future<int> getOrCreateConversation(int user1Id, int user2Id) async {
+    final db = await database;
+    
+    // Check if conversation already exists
+    final existing = await db.query(
+      'ChatConversation',
+      where: '(user1_id = ? AND user2_id = ?) OR (user1_id = ? AND user2_id = ?)',
+      whereArgs: [user1Id, user2Id, user2Id, user1Id],
+    );
+    
+    if (existing.isNotEmpty) {
+      return existing.first['conversation_id'] as int;
+    }
+    
+    // Create new conversation
+    final id = await db.insert(
+      'ChatConversation',
+      {
+        'user1_id': user1Id,
+        'user2_id': user2Id,
+        'last_message': '',
+        'last_message_time': DateTime.now().toIso8601String(),
+      },
+    );
+    
+    return id as int;
+  }
+
+  // Save a chat message
+  Future<int> saveMessage(int conversationId, int senderId, int receiverId, String content) async {
+    final db = await database;
+    
+    final messageId = await db.insert(
+      'ChatMessage',
+      {
+        'conversation_id': conversationId,
+        'sender_id': senderId,
+        'receiver_id': receiverId,
+        'content': content,
+        'is_read': 0,
+        'created_at': DateTime.now().toIso8601String(),
+      },
+    );
+    
+    // Update conversation last message
+    await db.update(
+      'ChatConversation',
+      {
+        'last_message': content,
+        'last_message_time': DateTime.now().toIso8601String(),
+      },
+      where: 'conversation_id = ?',
+      whereArgs: [conversationId],
+    );
+    
+    return messageId as int;
+  }
+
+  // Get messages for a conversation
+  Future<List<Map<String, dynamic>>> getConversationMessages(int conversationId) async {
+    final db = await database;
+    return await db.query(
+      'ChatMessage',
+      where: 'conversation_id = ?',
+      whereArgs: [conversationId],
+      orderBy: 'created_at ASC',
+    );
+  }
+
+  // Mark messages as read
+  Future<void> markMessagesAsRead(int conversationId, int currentUserId) async {
+    final db = await database;
+    await db.update(
+      'ChatMessage',
+      {'is_read': 1},
+      where: 'conversation_id = ? AND receiver_id = ?',
+      whereArgs: [conversationId, currentUserId],
+    );
+  }
+
+  // Get unread message count for a user
+  Future<int> getUnreadCount(int conversationId, int userId) async {
+    final db = await database;
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM ChatMessage WHERE conversation_id = ? AND receiver_id = ? AND is_read = 0',
+      [conversationId, userId],
+    );
+    
+    return result.first['count'] as int? ?? 0;
+  }
+
+  // Get last message for a conversation
+  Future<Map<String, dynamic>?> getLastMessage(int conversationId) async {
+    final db = await database;
+    final result = await db.query(
+      'ChatMessage',
+      where: 'conversation_id = ?',
+      whereArgs: [conversationId],
+      orderBy: 'created_at DESC',
+      limit: 1,
+    );
+    
+    return result.isNotEmpty ? result.first : null;
   }
   
 }

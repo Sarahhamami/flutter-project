@@ -1,20 +1,38 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/splash_screen.dart';
-import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
 import 'db/database_helper.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
+import 'dart:io';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize Firebase
+  try {
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: 'AIzaSyBGthroSSE5T9jlnGVR1URxtpITqDXtBwU',
+        appId: '1:110912732201:android:c5b44afc8c1a10a30bb038',
+        messagingSenderId: '110912732201',
+        projectId: 'healthtracker-d3a5c',
+        databaseURL: 'https://healthtracker-d3a5c-default-rtdb.firebaseio.com',
+        storageBucket: 'healthtracker-d3a5c.firebasestorage.app',
+      ),
+    );
+    print("✅ Firebase initialized successfully");
+  } catch (e) {
+    print("⚠️ Firebase initialization error: $e");
+    print("Please check your Firebase configuration");
+  }
+
   // 🔹 Delete old database for a fresh start (optional, dev only)
- /* final dbPath = join(await getDatabasesPath(), 'app.db');
+  final dbPath = join(await getDatabasesPath(), 'app.db');
   if (await File(dbPath).exists()) {
     await deleteDatabase(dbPath);
     print("🗑️ Old database deleted for fresh start");
-  }*/
+  }
 
   // 🔹 Initialize database
   final db = await DatabaseHelper().database;

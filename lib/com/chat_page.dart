@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import '../db/database_helper.dart';
+import 'friends_list_page.dart';
+import 'chat_conversation_page.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 // Color palette
 const Color kWhite = Colors.white;
@@ -15,17 +19,86 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage> {
   final List<ChatFriend> _friends = [];
+  int? _currentUserId;
 
   @override
   void initState() {
     super.initState();
-    _loadFriends();
+    _loadCurrentUser();
+    _setupConversationListener();
   }
 
-  void _loadFriends() {
+  @override
+  void dispose() {
+    // Clean up listener if needed
+    super.dispose();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    try {
+      final db = DatabaseHelper();
+      _currentUserId = await db.getDefaultUserId();
+      debugPrint('👤 ChatPage loaded current user ID: $_currentUserId');
+      await _loadFriends();
+    } catch (e) {
+      debugPrint('❌ Error loading current user in ChatPage: $e');
+      _currentUserId = 1; // Fallback
+      await _loadFriends();
+    }
+  }
+
+  Future<void> _loadFriends() async {
+    try {
+      final db = DatabaseHelper();
+      final users = await db.getAllUsers();
+
+      debugPrint('📊 Total users in database: ${users.length}');
+      for (var user in users) {
+        debugPrint('👤 User ID: ${user['user_id']}, Name: ${user['prenom']} ${user['nom']}, Email: ${user['email']}');
+      }
+
+      _friends.clear();
+      for (var user in users) {
+        // Don't add current user to friends list
+        if (user['user_id'] != _currentUserId) {
+          debugPrint('➕ Adding friend: ${user['prenom']} ${user['nom']} (ID: ${user['user_id']})');
+          _friends.add(ChatFriend(
+            id: user['user_id'].toString(),
+            name: '${user['prenom']} ${user['nom']}',
+            lastMessage: 'Start a conversation!', // Default message
+            timestamp: DateTime.now(),
+            isOnline: false, // TODO: Implement online status
+            unreadCount: 0, // TODO: Load from Firebase
+            avatar: 'assets/images/splash.png',
+          ));
+        } else {
+          debugPrint('🚫 Skipping current user: ${user['prenom']} ${user['nom']} (ID: ${user['user_id']})');
+        }
+      }
+
+      debugPrint('👥 Loaded ${_friends.length} friends from database (excluding current user)');
+      debugPrint('🎯 Current user ID: $_currentUserId');
+
+      // Load conversation data from Firebase
+      await _loadConversationsFromFirebase();
+
+      // Force UI update
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (e) {
+      debugPrint('❌ Error loading friends: $e');
+      // Fallback to some default friends for testing
+      _loadFallbackFriends();
+    }
+  }
+
+  void _loadFallbackFriends() {
+    debugPrint('⚠️ Loading fallback friends - this should not happen if database works');
+    _friends.clear();
     _friends.addAll([
       ChatFriend(
-        id: '1',
+        id: '2',
         name: 'Dr. Sarah Johnson',
         lastMessage: 'Thanks for sharing your symptoms. Let me know how you feel tomorrow.',
         timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
@@ -34,7 +107,7 @@ class _ChatPageState extends State<ChatPage> {
         avatar: 'assets/images/splash.png',
       ),
       ChatFriend(
-        id: '2',
+        id: '3',
         name: 'Mike Chen',
         lastMessage: 'Hey! How was your workout today?',
         timestamp: DateTime.now().subtract(const Duration(hours: 2)),
@@ -42,34 +115,106 @@ class _ChatPageState extends State<ChatPage> {
         unreadCount: 0,
         avatar: 'assets/images/splash.png',
       ),
-      ChatFriend(
-        id: '3',
-        name: 'Emma Wilson',
-        lastMessage: 'The new health app you recommended is amazing!',
-        timestamp: DateTime.now().subtract(const Duration(hours: 5)),
-        isOnline: true,
-        unreadCount: 1,
-        avatar: 'assets/images/splash.png',
-      ),
-      ChatFriend(
-        id: '4',
-        name: 'Dr. Ahmed Hassan',
-        lastMessage: 'Your test results look great. Keep up the good work!',
-        timestamp: DateTime.now().subtract(const Duration(days: 1)),
-        isOnline: false,
-        unreadCount: 0,
-        avatar: 'assets/images/splash.png',
-      ),
-      ChatFriend(
-        id: '5',
-        name: 'Lisa Rodriguez',
-        lastMessage: 'Can we schedule a walk this weekend?',
-        timestamp: DateTime.now().subtract(const Duration(days: 2)),
-        isOnline: true,
-        unreadCount: 3,
-        avatar: 'assets/images/splash.png',
-      ),
     ]);
+    setState(() {});
+  }
+
+  Future<void> _loadConversationsFromFirebase() async {
+    if (_currentUserId == null) return;
+
+    try {
+      debugPrint('🔄 Loading conversations from Firebase for user $_currentUserId');
+
+      // First, let's check what's actually in Firebase
+      final rootRef = FirebaseDatabase.instance.ref();
+      final rootSnapshot = await rootRef.get();
+      debugPrint('🌳 Firebase root data: ${rootSnapshot.value}');
+
+      final conversationsRef = FirebaseDatabase.instance
+          .ref()
+          .child('conversations');
+
+      final snapshot = await conversationsRef.get();
+      if (snapshot.exists) {
+        final data = snapshot.value as Map;
+        debugPrint('📊 Found ${data.length} conversations in Firebase');
+        debugPrint('📋 Conversation keys: ${data.keys.toList()}');
+        debugPrint('📋 Full conversation data: $data');
+
+        // Update friends with real conversation data
+        for (var friend in _friends) {
+          final friendId = int.parse(friend.id);
+          final conversationId = _getConversationId(_currentUserId!, friendId);
+          debugPrint('🔍 Checking conversation: $conversationId for friend ${friend.name} (ID: $friendId)');
+
+          if (data.containsKey(conversationId)) {
+            final convData = data[conversationId] as Map;
+            final lastMessage = convData['lastMessage'];
+            final lastMessageTime = convData['lastMessageTime'];
+
+            debugPrint('📝 Raw conversation data for $conversationId: $convData');
+            debugPrint('📝 Extracted: lastMessage="$lastMessage", lastMessageTime=$lastMessageTime');
+
+            if (lastMessage != null && lastMessage.toString().isNotEmpty) {
+              friend.lastMessage = lastMessage.toString();
+              debugPrint('✅ Updated ${friend.name} with last message: "${friend.lastMessage}"');
+            } else {
+              debugPrint('⚠️ Empty or null lastMessage for ${friend.name}');
+            }
+
+            if (lastMessageTime != null) {
+              try {
+                friend.timestamp = DateTime.fromMillisecondsSinceEpoch(int.parse(lastMessageTime.toString()));
+                debugPrint('✅ Updated ${friend.name} timestamp to ${friend.timestamp}');
+              } catch (e) {
+                debugPrint('⚠️ Error parsing timestamp for ${friend.name}: $e');
+              }
+            } else {
+              debugPrint('⚠️ No lastMessageTime found for ${friend.name}');
+            }
+          } else {
+            debugPrint('❌ Conversation $conversationId not found for ${friend.name}');
+          }
+        }
+
+        debugPrint('🔄 Calling setState to update UI');
+        if (mounted) {
+          setState(() {});
+        }
+
+        // Debug: Print final friend states
+        for (var friend in _friends) {
+          debugPrint('🎯 Final state for ${friend.name}: lastMessage="${friend.lastMessage}", timestamp=${friend.timestamp}');
+        }
+      } else {
+        debugPrint('📭 No conversations found in Firebase');
+      }
+    } catch (e) {
+      debugPrint('❌ Error loading conversations from Firebase: $e');
+      debugPrint('❌ Error details: ${e.toString()}');
+      debugPrint('❌ Stack trace: ${StackTrace.current}');
+    }
+  }
+
+  void _setupConversationListener() {
+    debugPrint('👂 Setting up conversation listener');
+    FirebaseDatabase.instance
+        .ref()
+        .child('conversations')
+        .onValue
+        .listen((event) {
+          debugPrint('📡 Conversations updated in Firebase');
+          if (_currentUserId != null && mounted) {
+            _loadConversationsFromFirebase();
+          }
+        }, onError: (error) {
+          debugPrint('❌ Conversation listener error: $error');
+        });
+  }
+
+  String _getConversationId(int user1, int user2) {
+    final sorted = [user1, user2]..sort();
+    return 'conversation_${sorted[0]}_${sorted[1]}';
   }
 
   @override
@@ -116,7 +261,17 @@ class _ChatPageState extends State<ChatPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => IndividualChatPage(friend: friend),
+                        builder: (context) => ChatConversationPage(
+                          friend: Friend(
+                            userId: int.parse(friend.id),
+                            name: friend.name,
+                            avatar: friend.avatar,
+                            status: friend.isOnline ? 'online' : 'offline',
+                            lastMessage: friend.lastMessage,
+                            lastMessageTime: friend.timestamp,
+                          ),
+                          currentUserId: _currentUserId ?? 1,
+                        ),
                       ),
                     );
                   },
@@ -140,8 +295,8 @@ class _ChatPageState extends State<ChatPage> {
 class ChatFriend {
   final String id;
   final String name;
-  final String lastMessage;
-  final DateTime timestamp;
+  String lastMessage;
+  DateTime timestamp;
   final bool isOnline;
   final int unreadCount;
   final String avatar;

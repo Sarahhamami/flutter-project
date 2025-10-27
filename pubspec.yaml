@@ -16,6 +16,9 @@ dependencies:
   http: ^1.2.0
   url_launcher: ^6.1.10
 
+  # Firebase dependencies
+  firebase_core: ^3.15.2
+  firebase_database: ^11.3.10
   cupertino_icons: ^1.0.8
 
 dev_dependencies:

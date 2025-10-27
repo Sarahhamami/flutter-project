@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "110912732201",
+    "project_id": "healthtracker-d3a5c",
+    "storage_bucket": "healthtracker-d3a5c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:110912732201:android:c5b44afc8c1a10a30bb038",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBGthroSSE5T9jlnGVR1URxtpITqDXtBwU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

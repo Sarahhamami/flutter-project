@@ -3,7 +3,7 @@ import '../models/article.dart';
 import '../services/news_service.dart';
 import 'article_detail.dart';
 import 'forum_page.dart';
-import 'chat_page.dart';
+import 'friends_list_page.dart';
 
 // Palette
 const Color kWhite = Colors.white;
@@ -61,7 +61,7 @@ class _ArticlesDisplayState extends State<ArticlesDisplay> {
       case 2: // Chat
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const ChatPage()),
+          MaterialPageRoute(builder: (context) => const FriendsListPage()),
         );
         // Reset to home tab after navigation
         setState(() {
