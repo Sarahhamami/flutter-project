@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../repositories/appointment_repository.dart';
+import '../user/current_user.dart';
 
 class AppointmentDetailsPage extends StatelessWidget {
   final Map<String, dynamic> appointment;
@@ -37,10 +38,13 @@ class AppointmentDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = CurrentUser().getUser();
+    final isDoctor = user?['role'] == 'Doctor';
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Appointment Details'),
-        backgroundColor: const Color(0xFF20c997),
+        backgroundColor: const Color(0xFF0DCAF0),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -58,15 +62,18 @@ class AppointmentDetailsPage extends StatelessWidget {
                 ),
                 const Divider(height: 25),
 
-                // ✅ Show names instead of IDs
-                Text(
-                  'Doctor: ${appointment['medecin_nom']} ${appointment['medecin_prenom']}',
-                  style: const TextStyle(fontSize: 16),
-                ),
-                Text(
-                  'Patient: ${appointment['patient_nom']} ${appointment['patient_prenom']}',
-                  style: const TextStyle(fontSize: 16),
-                ),
+                // ✅ Show names depending on role
+                if (isDoctor)
+                  Text(
+                    'Patient: ${appointment['patient_nom']} ${appointment['patient_prenom']}',
+                    style: const TextStyle(fontSize: 16),
+                  )
+                else
+                  Text(
+                    'Doctor: Dr. ${appointment['medecin_nom']} ${appointment['medecin_prenom']}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+
                 Text('Date: ${appointment['date_rdv']}', style: const TextStyle(fontSize: 16)),
                 Text('Time: ${appointment['heure_rdv']}', style: const TextStyle(fontSize: 16)),
                 Text('Status: ${appointment['statut']}', style: const TextStyle(fontSize: 16)),

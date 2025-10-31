@@ -71,33 +71,77 @@ class _AddAppointmentPageState extends State<AddAppointmentPage> {
       });
     }
   }
-
-  Future<void> _saveAppointment() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (_selectedDoctorId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select a doctor 👨‍⚕️")),
-      );
-      return;
-    }
-
-    final user = CurrentUser().getUser();
-    final appointment = {
-      'patient_id': user?['user_id'],
-      'medecin_id': int.parse(_selectedDoctorId!),
-      'date_rdv': _dateController.text,
-      'heure_rdv': _timeController.text,
-      'statut': 'Scheduled',
-    };
-
-    await _appointmentRepo.insertAppointment(appointment);
-
+Future<void> _saveAppointment() async {
+  if (!_formKey.currentState!.validate()) return;
+  if (_selectedDoctorId == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Appointment added ✅')),
+      const SnackBar(content: Text("Please select a doctor 👨‍⚕️")),
     );
-
-    Navigator.pop(context);
+    return;
   }
+
+  final date = _dateController.text;
+  final time = _timeController.text;
+  final doctorId = int.parse(_selectedDoctorId!);
+
+  // ✅ Parse selected date & time
+  final selectedDateTime = DateTime.parse("$date ${_convertTo24h(time)}");
+
+  // 1️⃣ Check working hours (9AM - 5PM)
+  final workStart = DateTime(selectedDateTime.year, selectedDateTime.month,
+      selectedDateTime.day, 9, 0);
+  final workEnd = DateTime(selectedDateTime.year, selectedDateTime.month,
+      selectedDateTime.day, 17, 0);
+  if (selectedDateTime.isBefore(workStart) ||
+      selectedDateTime.isAfter(workEnd)) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+          content: Text("Doctor only works between 9AM and 5PM ⛔")),
+    );
+    return;
+  }
+
+  // 2️⃣ Check doctor availability
+  final isAvailable =
+      await _appointmentRepo.isDoctorAvailable(doctorId, date, time);
+  if (!isAvailable) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Doctor not available at this time ⛔")),
+    );
+    return;
+  }
+
+  final user = CurrentUser().getUser();
+  final appointment = {
+    'patient_id': user?['user_id'],
+    'medecin_id': doctorId,
+    'date_rdv': date,
+    'heure_rdv': time,
+    'statut': 'Scheduled',
+  };
+
+  await _appointmentRepo.insertAppointment(appointment);
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('Appointment added ✅')),
+  );
+
+  Navigator.pop(context);
+}
+
+// Helper: Convert "2:30 PM" -> "14:30"
+String _convertTo24h(String time) {
+  final t = TimeOfDay(
+      hour: int.parse(time.split(":")[0]),
+      minute: int.parse(time.split(":")[1].split(" ")[0]));
+  if (time.toLowerCase().contains("pm") && t.hour != 12) {
+    return "${t.hour + 12}:${t.minute.toString().padLeft(2, '0')}";
+  } else if (time.toLowerCase().contains("am") && t.hour == 12) {
+    return "00:${t.minute.toString().padLeft(2, '0')}";
+  }
+  return "${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}";
+}
+
 
   @override
   Widget build(BuildContext context) {

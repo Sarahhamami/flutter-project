@@ -73,4 +73,14 @@ Future<void> updatePassword(String email, String newHashedPassword) async {
   );
   return result;
 }
+Future<void> updateUser(int id, Map<String, dynamic> updatedFields) async {
+  final db = await _dbHelper.database;
+  await db.update(
+    'Utilisateur',
+    updatedFields,
+    where: 'user_id = ?',
+    whereArgs: [id],
+  );
+}
+
 }

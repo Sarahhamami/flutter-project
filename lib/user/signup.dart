@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/email_service.dart';
+import 'package:flutter_application_1/user/gemini.dart';
 import 'package:flutter_application_1/user/otp_verification_page.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:bcrypt/bcrypt.dart';
@@ -129,8 +130,35 @@ Future<void> _saveUser() async {
   final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
   if (!emailRegex.hasMatch(val)) return 'Enter a valid email';
   return null;
-}),
-              _buildPasswordField(_passwordController, "Password"),
+}),Row(
+  children: [
+    Expanded(child: _buildPasswordField(_passwordController, "Password")),
+    const SizedBox(width: 8), // small spacing
+    ElevatedButton.icon(
+      onPressed: () async {
+        final strongPassword = await GeminiService.generateStrongPassword();
+        if (strongPassword.isNotEmpty) {
+          _passwordController.text = strongPassword;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Strong password suggested ✅")),
+          );
+        }
+      },
+      icon: const Icon(Icons.smart_toy, size: 20), // robot icon
+      label: const Text("AI"),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF0dcaf0),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        textStyle: const TextStyle(
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+  ],
+),
               _buildTextField(_phoneController, "Phone",
                   type: TextInputType.phone),
               _buildTextField(_addressController, "Address"),
@@ -229,42 +257,38 @@ Widget _buildTextField(TextEditingController controller, String label,
     );
   }
 
-  Widget _buildPasswordField(TextEditingController controller, String label) {
-    final gray = Colors.grey.shade300;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: TextFormField(
-        controller: controller,
-        obscureText: _obscurePassword,
-        validator: (val) {
-          if (val == null || val.isEmpty) return 'This field is required';
-          if (val.length < 6) {
-            return 'Password must be at least 6 characters';
-          }
-          return null;
-        },
-        decoration: InputDecoration(
-          labelText: label,
-          suffixIcon: IconButton(
-            icon: Icon(
-              _obscurePassword ? Icons.visibility_off : Icons.visibility,
-              color: Colors.grey,
-            ),
-            onPressed: () =>
-                setState(() => _obscurePassword = !_obscurePassword),
+Widget _buildPasswordField(TextEditingController controller, String label) {
+  final gray = Colors.grey.shade300;
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 6),
+    child: TextFormField(
+      controller: controller,
+      obscureText: _obscurePassword,
+      validator: (val) {
+        if (val == null || val.isEmpty) return 'This field is required';
+        if (val.length < 6) return 'Password must be at least 6 characters';
+        return null;
+      },
+      decoration: InputDecoration(
+        labelText: label,
+        suffixIcon: IconButton(
+          icon: Icon(
+            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+            color: Colors.grey,
           ),
-          labelStyle: const TextStyle(color: Colors.grey),
-          filled: true,
-          fillColor: gray.withOpacity(0.2),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
+          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+        ),
+        labelStyle: const TextStyle(color: Colors.grey),
+        filled: true,
+        fillColor: gray.withOpacity(0.2),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
         ),
       ),
-    );
-  }
-
+    ),
+  );
+}
   Widget _buildDropdown({
     required String label,
     required String value,
@@ -299,3 +323,7 @@ Widget _buildTextField(TextEditingController controller, String label,
     );
   }
 }
+
+
+
+
