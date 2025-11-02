@@ -8,6 +8,7 @@ import 'wellness/mood_tracker_screen.dart';
 import 'wellness/breathing_exercises_screen.dart';
 import 'wellness/meditation_screen.dart';
 import 'wellness/menstrual_cycle_screen.dart';
+import 'wellness/analytics_screen.dart';
 
 void main() {
   runApp(
@@ -44,12 +45,13 @@ class MyApp extends StatelessWidget {
         '/breathing': (context) => BreathingExercisesScreen(),
         '/meditation': (context) => MeditationScreen(),
         '/menstrual_cycle': (context) => MenstrualCycleScreen(),
+        '/analytics': (context) => AnalyticsScreen(),
       },
     );
   }
 }
 
-// Main home page
+// Page d'accueil principale
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -73,7 +75,7 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Icon and title
+            // Icône et titre
             Icon(
               Icons.health_and_safety,
               size: 80,
