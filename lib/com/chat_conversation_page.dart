@@ -210,160 +210,377 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kWhite,
-      appBar: AppBar(
-        backgroundColor: kWhite,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: kDark),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Row(
-          children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.grey.shade200,
-              backgroundImage: const AssetImage('assets/images/splash.png'),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.friend.name,
-                  style: TextStyle(
-                    color: kDark,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                Text(
-                  _getStatusText(widget.friend.status),
-                  style: TextStyle(
-                    color: _getStatusColor(widget.friend.status),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+      backgroundColor: const Color(0xFFF8F9FA), // Light grey background
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(80),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                kPrimary.withOpacity(0.8),
+                kAccent.withOpacity(0.7),
               ],
             ),
-          ],
-        ),
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(
-              color: kPrimary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(25),
+              bottomRight: Radius.circular(25),
             ),
-            child: IconButton(
-              icon: Icon(Icons.more_vert, color: kPrimary),
-              onPressed: () {},
-            ),
+            boxShadow: [
+              BoxShadow(
+                color: kPrimary.withOpacity(0.2),
+                blurRadius: 15,
+                offset: const Offset(0, 6),
+              ),
+            ],
           ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Chat messages
-          Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: kPrimary),
-                  )
-                : _hasTimedOut
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.signal_wifi_off,
-                              size: 64,
-                              color: Colors.orange,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Connection Timeout',
-                              style: TextStyle(
-                                color: kDark.withOpacity(0.7),
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Unable to connect to chat service.\nPlease check your internet connection.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: kDark.withOpacity(0.5),
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: _loadMessages,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: kPrimary,
-                                foregroundColor: kWhite,
-                              ),
-                              child: const Text('Retry'),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  // Back button with glass effect
+                  Container(
+                    decoration: BoxDecoration(
+                      color: kWhite.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(
+                        color: kWhite.withOpacity(0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: kWhite, size: 22),
+                      onPressed: () => Navigator.pop(context),
+                      padding: const EdgeInsets.all(10),
+                      constraints: const BoxConstraints(),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Enhanced avatar with glowing effect
+                  Stack(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: kWhite.withOpacity(0.3),
+                              blurRadius: 15,
+                              spreadRadius: 2,
                             ),
                           ],
                         ),
-                      )
-                    : _messages.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.chat_bubble_outline,
-                                  size: 64,
-                                  color: kDark.withOpacity(0.3),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No messages yet',
-                                  style: TextStyle(
-                                    color: kDark.withOpacity(0.5),
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Start a conversation!',
-                                  style: TextStyle(
-                                    color: kDark.withOpacity(0.3),
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : ListView.builder(
-                            controller: _scrollController,
-                            padding: const EdgeInsets.all(16),
-                            itemCount: _messages.length,
-                            itemBuilder: (context, index) {
-                              final message = _messages[index];
-                              final isUser = message.senderId == _currentUserId.toString();
-                              return _ChatBubble(
-                                message: message,
-                                isUser: isUser,
-                              );
-                            },
+                        child: CircleAvatar(
+                          radius: 25,
+                          backgroundColor: kWhite.withOpacity(0.9),
+                          backgroundImage: const AssetImage('assets/images/splash.png'),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 2,
+                        right: 2,
+                        child: Container(
+                          width: 16,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: _getStatusColor(widget.friend.status),
+                            border: Border.all(color: kWhite, width: 3),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: _getStatusColor(widget.friend.status).withOpacity(0.5),
+                                blurRadius: 6,
+                                spreadRadius: 1,
+                              ),
+                            ],
                           ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          widget.friend.name,
+                          style: TextStyle(
+                            color: kWhite,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            shadows: [
+                              Shadow(
+                                color: kDark.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: kWhite.withOpacity(0.8),
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: kWhite.withOpacity(0.5),
+                                    blurRadius: 4,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              _getStatusText(widget.friend.status),
+                              style: TextStyle(
+                                color: kWhite.withOpacity(0.9),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                shadows: [
+                                  Shadow(
+                                    color: kDark.withOpacity(0.3),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Menu button with glass effect
+                  Container(
+                    decoration: BoxDecoration(
+                      color: kWhite.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(
+                        color: kWhite.withOpacity(0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.more_vert, color: kWhite, size: 22),
+                      onPressed: () {},
+                      padding: const EdgeInsets.all(10),
+                      constraints: const BoxConstraints(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          // Message input
+        ),
+      ),
+      body: Column(
+        children: [
+          // Chat messages with enhanced background
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    kWhite.withOpacity(0.8),
+                    kWhite.withOpacity(0.4),
+                  ],
+                ),
+              ),
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(color: kPrimary),
+                    )
+                  : _hasTimedOut
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(24),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [Colors.orange.withOpacity(0.1), Colors.red.withOpacity(0.1)],
+                                  ),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.orange.withOpacity(0.2),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  Icons.signal_wifi_off,
+                                  size: 48,
+                                  color: Colors.orange,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              Text(
+                                'Connection Timeout',
+                                style: TextStyle(
+                                  color: kDark,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Unable to connect to chat service.\nPlease check your internet connection.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: kDark.withOpacity(0.7),
+                                  fontSize: 16,
+                                  height: 1.5,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              Container(
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [kPrimary, kAccent],
+                                  ),
+                                  borderRadius: BorderRadius.circular(25),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: kPrimary.withOpacity(0.3),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: ElevatedButton(
+                                  onPressed: _loadMessages,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.transparent,
+                                    shadowColor: Colors.transparent,
+                                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                                  ),
+                                  child: const Text(
+                                    'Retry Connection',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : _messages.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(32),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [kPrimary.withOpacity(0.1), kAccent.withOpacity(0.1)],
+                                      ),
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: kPrimary.withOpacity(0.1),
+                                          blurRadius: 20,
+                                          offset: const Offset(0, 8),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Icon(
+                                      Icons.chat_bubble_outline,
+                                      size: 64,
+                                      color: kPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  Text(
+                                    'Start the Conversation',
+                                    style: TextStyle(
+                                      color: kDark,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Send a message to begin chatting with\n${widget.friend.name}',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: kDark.withOpacity(0.7),
+                                      fontSize: 16,
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: kPrimary.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.waving_hand,
+                                          color: kPrimary,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Say Hello! 👋',
+                                          style: TextStyle(
+                                            color: kPrimary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              controller: _scrollController,
+                              padding: const EdgeInsets.all(20),
+                              itemCount: _messages.length,
+                              itemBuilder: (context, index) {
+                                final message = _messages[index];
+                                final isUser = message.senderId == _currentUserId.toString();
+                                return _ChatBubble(
+                                  message: message,
+                                  isUser: isUser,
+                                );
+                              },
+                            ),
+            ),
+          ),
+          // Enhanced Message input
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: kWhite,
               boxShadow: [
                 BoxShadow(
-                  color: kDark.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, -2),
+                  color: kDark.withOpacity(0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, -4),
                 ),
               ],
             ),
@@ -372,24 +589,40 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: kDark.withOpacity(0.05),
+                      color: const Color(0xFFF8F9FA),
                       borderRadius: BorderRadius.circular(25),
                       border: Border.all(
-                        color: kDark.withOpacity(0.1),
+                        color: kPrimary.withOpacity(0.2),
                         width: 1,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: kDark.withOpacity(0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: TextField(
                       controller: _messageController,
                       decoration: InputDecoration(
                         hintText: 'Type your message...',
                         hintStyle: TextStyle(
-                          color: kDark.withOpacity(0.5),
+                          color: kDark.withOpacity(0.6),
+                          fontSize: 16,
                         ),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 20,
-                          vertical: 12,
+                          vertical: 14,
+                        ),
+                        prefixIcon: Container(
+                          margin: const EdgeInsets.only(left: 8),
+                          child: Icon(
+                            Icons.message_outlined,
+                            color: kPrimary.withOpacity(0.7),
+                            size: 20,
+                          ),
                         ),
                       ),
                       maxLines: null,
@@ -398,12 +631,21 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
                     ),
                   ),
                 ),
-                // GIF button
+                const SizedBox(width: 12),
+                // GIF button with enhanced styling
                 Container(
-                  margin: const EdgeInsets.only(right: 8),
                   decoration: BoxDecoration(
-                    color: kPrimary.withOpacity(0.1),
+                    gradient: LinearGradient(
+                      colors: [kPrimary.withOpacity(0.1), kAccent.withOpacity(0.1)],
+                    ),
                     borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: kPrimary.withOpacity(0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: IconButton(
                     onPressed: () {
@@ -417,34 +659,39 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
                       );
                     },
                     icon: Icon(
-                      Icons.gif,
+                      Icons.gif_box_outlined,
                       color: kPrimary,
-                      size: 20,
+                      size: 24,
                     ),
+                    padding: const EdgeInsets.all(12),
                   ),
                 ),
-                // Send button
+                const SizedBox(width: 8),
+                // Send button with enhanced styling
                 Container(
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [kPrimary, kAccent],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(25),
                     boxShadow: [
                       BoxShadow(
-                        color: kPrimary.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+                        color: kPrimary.withOpacity(0.4),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
                   child: IconButton(
                     onPressed: _sendMessage,
                     icon: const Icon(
-                      Icons.send,
+                      Icons.send_rounded,
                       color: kWhite,
-                      size: 20,
+                      size: 22,
                     ),
+                    padding: const EdgeInsets.all(14),
                   ),
                 ),
               ],
@@ -494,49 +741,62 @@ class _ChatBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 20),
       child: Row(
         mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) ...[
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.grey.shade200,
-              child: const Icon(Icons.person, color: kPrimary, size: 16),
+            Container(
+              margin: const EdgeInsets.only(top: 4),
+              child: CircleAvatar(
+                radius: 20,
+                backgroundColor: Colors.grey.shade200,
+                backgroundImage: const AssetImage('assets/images/splash.png'),
+                child: const Icon(Icons.person, color: kPrimary, size: 18),
+              ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
           ],
           Flexible(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              constraints: const BoxConstraints(maxWidth: 280),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
               decoration: BoxDecoration(
-                color: isUser ? kPrimary : kDark.withOpacity(0.05),
+                color: isUser ? kPrimary : kWhite,
                 borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(20),
-                  topRight: const Radius.circular(20),
-                  bottomLeft: isUser ? const Radius.circular(20) : const Radius.circular(4),
-                  bottomRight: isUser ? const Radius.circular(4) : const Radius.circular(20),
+                  topLeft: const Radius.circular(24),
+                  topRight: const Radius.circular(24),
+                  bottomLeft: isUser ? const Radius.circular(24) : const Radius.circular(6),
+                  bottomRight: isUser ? const Radius.circular(6) : const Radius.circular(24),
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: isUser
-                        ? kPrimary.withOpacity(0.2)
-                        : kDark.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+                        ? kPrimary.withOpacity(0.25)
+                        : kDark.withOpacity(0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
                   ),
                 ],
+                border: isUser ? null : Border.all(
+                  color: kDark.withOpacity(0.1),
+                  width: 1,
+                ),
               ),
               child: _buildMessageContent(message, isUser),
             ),
           ),
           if (isUser) ...[
-            const SizedBox(width: 8),
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: kPrimary.withOpacity(0.1),
-              child: const Icon(Icons.person, color: kPrimary, size: 16),
+            const SizedBox(width: 12),
+            Container(
+              margin: const EdgeInsets.only(top: 4),
+              child: CircleAvatar(
+                radius: 20,
+                backgroundColor: kPrimary.withOpacity(0.1),
+                backgroundImage: const AssetImage('assets/images/splash.png'),
+                child: const Icon(Icons.person, color: kPrimary, size: 18),
+              ),
             ),
           ],
         ],
@@ -604,14 +864,15 @@ class _ChatBubble extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             _formatTime(message.timestamp),
             style: TextStyle(
               color: isUser
-                  ? kWhite.withOpacity(0.7)
-                  : kDark.withOpacity(0.5),
-              fontSize: 11,
+                  ? kWhite.withOpacity(0.8)
+                  : kDark.withOpacity(0.6),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -625,19 +886,34 @@ class _ChatBubble extends StatelessWidget {
             message.content,
             style: TextStyle(
               color: isUser ? kWhite : kDark,
-              fontSize: 14,
+              fontSize: 16,
               height: 1.4,
+              fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            _formatTime(message.timestamp),
-            style: TextStyle(
-              color: isUser
-                  ? kWhite.withOpacity(0.7)
-                  : kDark.withOpacity(0.5),
-              fontSize: 11,
-            ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _formatTime(message.timestamp),
+                style: TextStyle(
+                  color: isUser
+                      ? kWhite.withOpacity(0.8)
+                      : kDark.withOpacity(0.6),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              if (isUser) ...[
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.done_all,
+                  size: 14,
+                  color: kWhite.withOpacity(0.8),
+                ),
+              ],
+            ],
           ),
         ],
       );

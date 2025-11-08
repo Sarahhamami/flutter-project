@@ -48,12 +48,16 @@ class ForumCommentsPage extends StatefulWidget {
   final int topicId;
   final String topicTitle;
   final String topicDescription;
+  final int? topicUserId; // Add topic creator ID
+  final String? topicCreatedAt; // Add topic creation time
 
   const ForumCommentsPage({
     super.key,
     required this.topicId,
     required this.topicTitle,
     required this.topicDescription,
+    this.topicUserId,
+    this.topicCreatedAt,
   });
 
   @override
@@ -70,6 +74,7 @@ class _ForumCommentsPageState extends State<ForumCommentsPage>
   bool _isLoading = true;
   bool _isPosting = false;
   int _currentUserId = 1;
+  User? _topicAuthor; // Store topic author info
 
   late AnimationController _fabAnimationController;
   late Animation<double> _fabAnimation;
@@ -101,10 +106,24 @@ class _ForumCommentsPageState extends State<ForumCommentsPage>
       setState(() {
         _isLoading = true;
       });
-      
+
       // Get the default user ID
       _currentUserId = await _dbHelper.getDefaultUserId();
-      
+
+      // Load topic author info if topicUserId is provided
+      if (widget.topicUserId != null) {
+        try {
+          final users = await _dbHelper.getAllUsers();
+          _topicAuthor = users
+              .where((user) => user['user_id'] == widget.topicUserId)
+              .map((user) => User.fromMap(user))
+              .cast<User?>()
+              .firstWhere((user) => user != null, orElse: () => null);
+        } catch (e) {
+          debugPrint('Error loading topic author: $e');
+        }
+      }
+
       // Load comments for this topic
       await _loadComments();
     } catch (e) {
@@ -304,31 +323,34 @@ class _ForumCommentsPageState extends State<ForumCommentsPage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Author info (simplified for topic)
+                  // Author info with actual user data
                   Row(
                     children: [
                       Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [kPrimary.withOpacity(0.2), kAccent.withOpacity(0.2)],
-                          ),
-                          border: Border.all(
-                            color: kPrimary.withOpacity(0.3),
-                            width: 2,
-                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: kPrimary.withOpacity(0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: CircleAvatar(
                           radius: 20,
                           backgroundColor: Colors.grey.shade200,
-                          child: const Text(
-                            'T',
-                            style: TextStyle(
-                              color: kPrimary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
+                          backgroundImage: const AssetImage('assets/images/splash.png'),
+                          child: _topicAuthor?.fullName.isNotEmpty == true
+                              ? null
+                              : Text(
+                                  'U',
+                                  style: const TextStyle(
+                                    color: kPrimary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -337,14 +359,14 @@ class _ForumCommentsPageState extends State<ForumCommentsPage>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Forum Topic',
+                              _topicAuthor?.fullName ?? 'Unknown User',
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 15,
                                 color: kDark,
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 3),
                             Row(
                               children: [
                                 Icon(
@@ -352,9 +374,11 @@ class _ForumCommentsPageState extends State<ForumCommentsPage>
                                   size: 12,
                                   color: Colors.grey.shade500,
                                 ),
-                                const SizedBox(width: 4),
+                                const SizedBox(width: 5),
                                 Text(
-                                  'Posted recently',
+                                  widget.topicCreatedAt != null
+                                      ? 'Posted recently'
+                                      : 'Posted recently',
                                   style: TextStyle(
                                     color: Colors.grey.shade600,
                                     fontSize: 12,
@@ -687,27 +711,28 @@ class _CommentCardState extends State<_CommentCard>
                     Container(
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [kPrimary.withOpacity(0.2), kAccent.withOpacity(0.2)],
-                        ),
-                        border: Border.all(
-                          color: kPrimary.withOpacity(0.3),
-                          width: 2,
-                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: kPrimary.withOpacity(0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: CircleAvatar(
-                        radius: 16,
+                        radius: 18,
                         backgroundColor: Colors.grey.shade200,
-                        child: Text(
-                          widget.comment.author?.fullName.isNotEmpty == true
-                              ? widget.comment.author!.fullName[0].toUpperCase()
-                              : 'U',
-                          style: const TextStyle(
-                            color: kPrimary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
+                        backgroundImage: const AssetImage('assets/images/splash.png'),
+                        child: widget.comment.author?.fullName.isNotEmpty == true
+                            ? null
+                            : Text(
+                                'U',
+                                style: const TextStyle(
+                                  color: kPrimary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -719,24 +744,24 @@ class _CommentCardState extends State<_CommentCard>
                             widget.comment.author?.fullName ?? 'Unknown User',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                              fontSize: 15,
                               color: kDark,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 3),
                           Row(
                             children: [
                               Icon(
                                 Icons.access_time,
-                                size: 10,
+                                size: 11,
                                 color: Colors.grey.shade500,
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 5),
                               Text(
                                 _formatTimestamp(DateTime.parse(widget.comment.createdAt)),
                                 style: TextStyle(
                                   color: Colors.grey.shade600,
-                                  fontSize: 11,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -801,8 +826,9 @@ class _CommentCardState extends State<_CommentCard>
                     widget.comment.content,
                     style: TextStyle(
                       color: kDark,
-                      fontSize: 14,
-                      height: 1.4,
+                      fontSize: 15,
+                      height: 1.5,
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
                 ),
@@ -1033,6 +1059,15 @@ class _CommentCardState extends State<_CommentCard>
       return '${difference.inMinutes}m ago';
     } else {
       return 'Just now';
+    }
+  }
+
+  String _formatTimestampFromString(String timestampString) {
+    try {
+      final timestamp = DateTime.parse(timestampString);
+      return _formatTimestamp(timestamp);
+    } catch (e) {
+      return 'Posted recently';
     }
   }
 }

@@ -248,7 +248,7 @@ class _ForumPageState extends State<ForumPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kLightGrey,
+      backgroundColor: const Color(0xFFF8F9FA), // Light grey background
       appBar: AppBar(
         title: const Text(
           'Health Forum',
@@ -781,6 +781,7 @@ class _ForumPageState extends State<ForumPage> with TickerProviderStateMixin {
       }
     }
   }
+
 }
 
 class _ForumTopicCard extends StatefulWidget {
@@ -868,27 +869,28 @@ class _ForumTopicCardState extends State<_ForumTopicCard>
                     Container(
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [kPrimary.withOpacity(0.2), kAccent.withOpacity(0.2)],
-                        ),
-                        border: Border.all(
-                          color: kPrimary.withOpacity(0.3),
-                          width: 2,
-                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: kPrimary.withOpacity(0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: CircleAvatar(
                         radius: 20,
                         backgroundColor: Colors.grey.shade200,
-                        child: Text(
-                          widget.topic.author?.fullName.isNotEmpty == true
-                              ? widget.topic.author!.fullName[0].toUpperCase()
-                              : 'U',
-                          style: const TextStyle(
-                            color: kPrimary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
+                        backgroundImage: const AssetImage('assets/images/splash.png'),
+                        child: widget.topic.author?.fullName.isNotEmpty == true
+                            ? null
+                            : Text(
+                                'U',
+                                style: const TextStyle(
+                                  color: kPrimary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -904,7 +906,7 @@ class _ForumTopicCardState extends State<_ForumTopicCard>
                               color: kDark,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 3),
                           Row(
                             children: [
                               Icon(
@@ -912,7 +914,7 @@ class _ForumTopicCardState extends State<_ForumTopicCard>
                                 size: 12,
                                 color: Colors.grey.shade500,
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 5),
                               Text(
                                 _formatTimestamp(DateTime.parse(widget.topic.createdAt)),
                                 style: TextStyle(
@@ -992,9 +994,10 @@ class _ForumTopicCardState extends State<_ForumTopicCard>
                 Text(
                   widget.topic.description,
                   style: TextStyle(
-                    color: Colors.grey.shade700,
-                    fontSize: 14,
+                    color: kDark,
+                    fontSize: 15,
                     height: 1.5,
+                    fontWeight: FontWeight.w400,
                   ),
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
@@ -1077,6 +1080,8 @@ class _ForumTopicCardState extends State<_ForumTopicCard>
                                   topicId: widget.topic.topicId!,
                                   topicTitle: widget.topic.title,
                                   topicDescription: widget.topic.description,
+                                  topicUserId: widget.topic.createdBy,
+                                  topicCreatedAt: widget.topic.createdAt,
                                 ),
                               ),
                             );

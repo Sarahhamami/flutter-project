@@ -3,6 +3,9 @@ import 'chat_conversation_page.dart';
 import '../db/database_helper.dart';
 import '../models/article.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'navbar.dart';
+import 'articles_display.dart';
+import 'forum_page.dart';
 
 // Color palette
 const Color kWhite = Colors.white;
@@ -66,6 +69,7 @@ class _FriendsListPageState extends State<FriendsListPage> {
   String _searchQuery = '';
   List<Friend> _filteredFriends = [];
   int? _currentUserId;
+  int _selectedIndex = 2; // Start with chat selected
 
   // Dynamic exclusion based on current user
   int? _excludedUserId; // Will be set to current user ID
@@ -234,10 +238,40 @@ class _FriendsListPageState extends State<FriendsListPage> {
     );
   }
 
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    // Handle navigation for different tabs
+    switch (index) {
+      case 0: // Home - navigate to articles display
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ArticlesDisplay()),
+        );
+        break;
+      case 1: // Search
+        // Add search functionality here if needed
+        break;
+      case 2: // Chat - already here
+        break;
+      case 3: // Forum
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ForumPage()),
+        );
+        break;
+      case 4: // Profile
+        // Add profile functionality here if needed
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kWhite,
+      backgroundColor: kLightGrey,
       appBar: AppBar(
         title: const Text(
           'Chats',
@@ -249,6 +283,7 @@ class _FriendsListPageState extends State<FriendsListPage> {
         backgroundColor: kWhite,
         foregroundColor: kDark,
         elevation: 0,
+        automaticallyImplyLeading: false, // Remove back arrow
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 16),
@@ -280,28 +315,128 @@ class _FriendsListPageState extends State<FriendsListPage> {
       ),
       body: Column(
         children: [
-          // Search bar
+          // Amazing Header Section
           Container(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search users...',
-                prefixIcon: Icon(Icons.search, color: kPrimary),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25),
-                  borderSide: BorderSide(color: kDark.withOpacity(0.2)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25),
-                  borderSide: BorderSide(color: kPrimary, width: 2),
-                ),
-                filled: true,
-                fillColor: kDark.withOpacity(0.05),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  kPrimary.withOpacity(0.1),
+                  kAccent.withOpacity(0.05),
+                ],
               ),
-              onChanged: _searchFriends,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: kPrimary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              '💬 Chat Hub',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: kPrimary,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Connect & Chat',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 28,
+                              color: kDark,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Stay connected with your friends and community',
+                            style: TextStyle(
+                              color: kDark.withOpacity(0.7),
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: kPrimary.withOpacity(0.3),
+                            blurRadius: 15,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: const CircleAvatar(
+                        radius: 30,
+                        backgroundImage: AssetImage('assets/images/splash.png'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // Enhanced Search bar
+                Container(
+                  decoration: BoxDecoration(
+                    color: kWhite,
+                    borderRadius: BorderRadius.circular(25),
+                    boxShadow: [
+                      BoxShadow(
+                        color: kDark.withOpacity(0.08),
+                        blurRadius: 15,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search conversations...',
+                      hintStyle: TextStyle(color: kDark.withOpacity(0.6)),
+                      prefixIcon: Icon(Icons.search, color: kPrimary),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(Icons.clear, color: kDark.withOpacity(0.5)),
+                              onPressed: () {
+                                _searchController.clear();
+                                _searchFriends('');
+                              },
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      filled: true,
+                      fillColor: Colors.transparent,
+                    ),
+                    onChanged: _searchFriends,
+                  ),
+                ),
+              ],
             ),
           ),
+
+          const SizedBox(height: 8),
           // Friends list
           Expanded(
             child: _isLoading
@@ -314,34 +449,45 @@ class _FriendsListPageState extends State<FriendsListPage> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(24),
+                              padding: const EdgeInsets.all(32),
                               decoration: BoxDecoration(
-                                color: kPrimary.withOpacity(0.1),
+                                gradient: LinearGradient(
+                                  colors: [kPrimary.withOpacity(0.1), kAccent.withOpacity(0.1)],
+                                ),
                                 shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: kPrimary.withOpacity(0.1),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
                               ),
                               child: Icon(
                                 Icons.chat_bubble_outline,
-                                size: 48,
-                                color: kPrimary.withOpacity(0.7),
+                                size: 64,
+                                color: kPrimary,
                               ),
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 24),
                             Text(
-                              _searchQuery.isEmpty ? 'No users yet' : 'No results found',
+                              _searchQuery.isEmpty ? 'No conversations yet' : 'No results found',
                               style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
                                 color: kDark,
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 12),
                             Text(
                               _searchQuery.isEmpty
-                                  ? 'Users from database will appear here'
+                                  ? 'Start chatting with friends and community members'
                                   : 'Try a different search term',
+                              textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: kDark.withOpacity(0.7),
-                                fontSize: 14,
+                                fontSize: 16,
+                                height: 1.5,
                               ),
                             ),
                           ],
@@ -351,9 +497,9 @@ class _FriendsListPageState extends State<FriendsListPage> {
                         onRefresh: _loadFriends,
                         color: kPrimary,
                         child: ListView.separated(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           itemCount: _filteredFriends.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 12),
+                          separatorBuilder: (_, __) => const SizedBox(height: 8),
                           itemBuilder: (context, index) {
                             final friend = _filteredFriends[index];
                             return _FriendCard(
@@ -365,6 +511,10 @@ class _FriendsListPageState extends State<FriendsListPage> {
                       ),
           ),
         ],
+      ),
+      bottomNavigationBar: CustomBottomNavBar(
+        selectedIndex: _selectedIndex,
+        onTap: _onItemTapped,
       ),
     );
   }
@@ -379,16 +529,18 @@ class _FriendCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
         color: kWhite,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: kDark.withOpacity(0.1),
-          width: 1,
-        ),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: kDark.withOpacity(0.04),
+            color: kDark.withOpacity(0.06),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: kPrimary.withOpacity(0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

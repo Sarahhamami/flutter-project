@@ -4,6 +4,7 @@ import '../services/news_service.dart';
 import 'article_detail.dart';
 import 'forum_page.dart';
 import 'friends_list_page.dart';
+import 'navbar.dart';
 
 // Palette
 const Color kWhite = Colors.white;
@@ -91,7 +92,7 @@ class _ArticlesDisplayState extends State<ArticlesDisplay> {
   final double listBottomPadding = MediaQuery.of(context).padding.bottom + 8.0;
 
     return Scaffold(
-      backgroundColor: kWhite,
+      backgroundColor: const Color(0xFFF8F9FA), // Light grey background
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
@@ -443,99 +444,9 @@ class _ArticlesDisplayState extends State<ArticlesDisplay> {
           ),
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        bottom: true,
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: kDark.withOpacity(0.1),
-                blurRadius: 20,
-                offset: const Offset(0, -5),
-              ),
-            ],
-          ),
-          child: BottomNavigationBar(
-            backgroundColor: Colors.white,
-            elevation: 0,
-            type: BottomNavigationBarType.fixed,
-            items: [
-              BottomNavigationBarItem(
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: _selectedIndex == 0 ? kPrimary.withOpacity(0.1) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.home_filled,
-                    color: _selectedIndex == 0 ? kPrimary : kDark.withOpacity(0.5),
-                  ),
-                ),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: _selectedIndex == 1 ? kPrimary.withOpacity(0.1) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.search,
-                    color: _selectedIndex == 1 ? kPrimary : kDark.withOpacity(0.5),
-                  ),
-                ),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: _selectedIndex == 2 ? kPrimary.withOpacity(0.1) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.chat_bubble_outline,
-                    color: _selectedIndex == 2 ? kPrimary : kDark.withOpacity(0.5),
-                  ),
-                ),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: _selectedIndex == 3 ? kPrimary.withOpacity(0.1) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.local_hospital,
-                    color: _selectedIndex == 3 ? kPrimary : kDark.withOpacity(0.5),
-                  ),
-                ),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: _selectedIndex == 4 ? kPrimary.withOpacity(0.1) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.person_outline,
-                    color: _selectedIndex == 4 ? kPrimary : kDark.withOpacity(0.5),
-                  ),
-                ),
-                label: '',
-              ),
-            ],
-            currentIndex: _selectedIndex,
-            onTap: _onItemTapped,
-          ),
-        ),
+      bottomNavigationBar: CustomBottomNavBar(
+        selectedIndex: _selectedIndex,
+        onTap: _onItemTapped,
       ),
     );
   }
