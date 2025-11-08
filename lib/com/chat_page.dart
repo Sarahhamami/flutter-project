@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../db/database_helper.dart';
+import '../models/article.dart';
 import 'friends_list_page.dart';
 import 'chat_conversation_page.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -62,9 +63,10 @@ class _ChatPageState extends State<ChatPage> {
         // Don't add current user to friends list
         if (user['user_id'] != _currentUserId) {
           debugPrint('➕ Adding friend: ${user['prenom']} ${user['nom']} (ID: ${user['user_id']})');
+          final friendUser = User.fromMap(user);
           _friends.add(ChatFriend(
-            id: user['user_id'].toString(),
-            name: '${user['prenom']} ${user['nom']}',
+            id: friendUser.userId.toString(),
+            name: friendUser.fullName,
             lastMessage: 'Start a conversation!', // Default message
             timestamp: DateTime.now(),
             isOnline: false, // TODO: Implement online status
@@ -79,6 +81,12 @@ class _ChatPageState extends State<ChatPage> {
       debugPrint('👥 Loaded ${_friends.length} friends from database (excluding current user)');
       debugPrint('🎯 Current user ID: $_currentUserId');
 
+      // Debug: Show which friends were loaded for current user
+      debugPrint('👥 Friends list for user $_currentUserId:');
+      for (var friend in _friends) {
+        debugPrint('   - ${friend.name} (ID: ${friend.id})');
+      }
+
       // Load conversation data from Firebase
       await _loadConversationsFromFirebase();
 
@@ -88,6 +96,8 @@ class _ChatPageState extends State<ChatPage> {
       }
     } catch (e) {
       debugPrint('❌ Error loading friends: $e');
+      debugPrint('❌ Error details: ${e.toString()}');
+      debugPrint('❌ Stack trace: ${StackTrace.current}');
       // Fallback to some default friends for testing
       _loadFallbackFriends();
     }

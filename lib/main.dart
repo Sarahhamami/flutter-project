@@ -27,13 +27,13 @@ void main() async {
     print("Please check your Firebase configuration");
   }
 
-  // 🔹 Delete old database for a fresh start (optional, dev only)
-  final dbPath = join(await getDatabasesPath(), 'app.db');
+  //🔹 Delete old database for a fresh start (optional, dev only)
+ /* final dbPath = join(await getDatabasesPath(), 'app.db');
   if (await File(dbPath).exists()) {
     await deleteDatabase(dbPath);
     print("🗑️ Old database deleted for fresh start");
   }
-
+*/
   // 🔹 Initialize database
   final db = await DatabaseHelper().database;
   print("✅ Database initialized at: ${db.path}");

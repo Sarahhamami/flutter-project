@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'friends_list_page.dart';
 import '../services/chat_service.dart';
 import '../db/database_helper.dart';
+import '../models/article.dart';
+import 'gif_picker_dialog.dart';
+import '../services/gif_service.dart';
 
 // Color palette
 const Color kWhite = Colors.white;
@@ -152,6 +155,39 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error sending message: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _sendGif(GifData gif) async {
+    if (_currentUserId == null) return;
+
+    debugPrint('🎭 Sending GIF: ${gif.id} from user $_currentUserId to ${widget.friend.userId}');
+
+    try {
+      final currentUserIdStr = _currentUserId.toString();
+      final friendUserIdStr = widget.friend.userId.toString();
+
+      // Send GIF URL as a special message format
+      final gifMessage = '[GIF:${gif.url}]';
+
+      await _chatService.sendMessage(
+        currentUserIdStr,
+        friendUserIdStr,
+        gifMessage,
+      );
+
+      debugPrint('✅ GIF sent successfully');
+      _scrollToBottom();
+    } catch (e) {
+      debugPrint('❌ Error sending GIF: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error sending GIF: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -362,7 +398,32 @@ class _ChatConversationPageState extends State<ChatConversationPage> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                // GIF button
+                Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    color: kPrimary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: IconButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => GifPickerDialog(
+                          onGifSelected: (gif) {
+                            _sendGif(gif);
+                          },
+                        ),
+                      );
+                    },
+                    icon: Icon(
+                      Icons.gif,
+                      color: kPrimary,
+                      size: 20,
+                    ),
+                  ),
+                ),
+                // Send button
                 Container(
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
@@ -467,29 +528,7 @@ class _ChatBubble extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    message.content,
-                    style: TextStyle(
-                      color: isUser ? kWhite : kDark,
-                      fontSize: 14,
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _formatTime(message.timestamp),
-                    style: TextStyle(
-                      color: isUser
-                          ? kWhite.withOpacity(0.7)
-                          : kDark.withOpacity(0.5),
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ),
+              child: _buildMessageContent(message, isUser),
             ),
           ),
           if (isUser) ...[
@@ -503,6 +542,106 @@ class _ChatBubble extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildMessageContent(ChatMessage message, bool isUser) {
+    // Check if message is a GIF
+    final gifRegex = RegExp(r'^\[GIF:(.+)\]$');
+    final gifMatch = gifRegex.firstMatch(message.content);
+
+    if (gifMatch != null) {
+      final gifUrl = gifMatch.group(1)!;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            constraints: const BoxConstraints(
+              maxWidth: 200,
+              maxHeight: 150,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isUser ? kWhite.withOpacity(0.3) : kDark.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(11),
+              child: Image.network(
+                gifUrl,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    width: 100,
+                    height: 75,
+                    color: isUser ? kWhite.withOpacity(0.1) : kLightGrey,
+                    child: const Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: kPrimary,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: 100,
+                    height: 75,
+                    color: isUser ? kWhite.withOpacity(0.1) : kLightGrey,
+                    child: const Icon(
+                      Icons.broken_image,
+                      color: Colors.red,
+                      size: 24,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _formatTime(message.timestamp),
+            style: TextStyle(
+              color: isUser
+                  ? kWhite.withOpacity(0.7)
+                  : kDark.withOpacity(0.5),
+              fontSize: 11,
+            ),
+          ),
+        ],
+      );
+    } else {
+      // Regular text message
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            message.content,
+            style: TextStyle(
+              color: isUser ? kWhite : kDark,
+              fontSize: 14,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _formatTime(message.timestamp),
+            style: TextStyle(
+              color: isUser
+                  ? kWhite.withOpacity(0.7)
+                  : kDark.withOpacity(0.5),
+              fontSize: 11,
+            ),
+          ),
+        ],
+      );
+    }
   }
 
   String _formatTime(DateTime timestamp) {

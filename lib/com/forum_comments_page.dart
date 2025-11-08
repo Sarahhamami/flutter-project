@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../db/database_helper.dart';
+import '../models/article.dart';
 
 // Color palette for better UI
 const Color kPrimary = Color(0xFF01BCE5);
@@ -15,8 +16,7 @@ class ForumComment {
   final int userId;
   final String content;
   final String createdAt;
-  final String? authorName;
-  final String? authorEmail;
+  final User? author;
 
   ForumComment({
     this.postId,
@@ -24,21 +24,22 @@ class ForumComment {
     required this.userId,
     required this.content,
     required this.createdAt,
-    this.authorName,
-    this.authorEmail,
+    this.author,
   });
 
   factory ForumComment.fromMap(Map<String, dynamic> map) {
+    User? author;
+    if (map['user_id'] != null) {
+      author = User.fromMap(map);
+    }
+
     return ForumComment(
       postId: map['post_id'],
       topicId: map['topic_id'],
       userId: map['user_id'],
       content: map['content'],
       createdAt: map['created_at'],
-      authorName: map['nom'] != null && map['prenom'] != null 
-          ? '${map['prenom']} ${map['nom']}' 
-          : null,
-      authorEmail: map['email'],
+      author: author,
     );
   }
 }
@@ -273,76 +274,167 @@ class _ForumCommentsPageState extends State<ForumCommentsPage>
       ),
       body: Column(
         children: [
-          // Simple Topic header
+          // Topic header styled like forum posts
           Container(
             margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 8,
+                  color: kCardShadow,
+                  blurRadius: 12,
                   offset: const Offset(0, 4),
+                  spreadRadius: 0,
+                ),
+                BoxShadow(
+                  color: kPrimary.withOpacity(0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                  spreadRadius: 0,
                 ),
               ],
+              border: Border.all(
+                color: kPrimary.withOpacity(0.1),
+                width: 1,
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: kPrimary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.topic,
-                        color: kPrimary,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.topicTitle,
-                            style: const TextStyle(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Author info (simplified for topic)
+                  Row(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [kPrimary.withOpacity(0.2), kAccent.withOpacity(0.2)],
+                          ),
+                          border: Border.all(
+                            color: kPrimary.withOpacity(0.3),
+                            width: 2,
+                          ),
+                        ),
+                        child: CircleAvatar(
+                          radius: 20,
+                          backgroundColor: Colors.grey.shade200,
+                          child: const Text(
+                            'T',
+                            style: TextStyle(
+                              color: kPrimary,
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
-                              color: kDark,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${_comments.length} comments',
-                            style: TextStyle(
-                              color: kDark.withOpacity(0.7),
-                              fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Forum Topic',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                                color: kDark,
+                              ),
                             ),
-                          ),
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.access_time,
+                                  size: 12,
+                                  color: Colors.grey.shade500,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Posted recently',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade600,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Topic title
+                  Text(
+                    widget.topicTitle,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 17,
+                      color: kDark,
+                      height: 1.3,
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Topic description
+                  Text(
+                    widget.topicDescription,
+                    style: TextStyle(
+                      color: Colors.grey.shade700,
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Divider
+                  Container(
+                    height: 1,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.transparent,
+                          kPrimary.withOpacity(0.2),
+                          Colors.transparent,
                         ],
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  widget.topicDescription,
-                  style: TextStyle(
-                    color: kDark.withOpacity(0.8),
-                    fontSize: 14,
-                    height: 1.4,
                   ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+
+                  const SizedBox(height: 12),
+
+                  // Comments count
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.chat_bubble_outline,
+                        size: 16,
+                        color: Colors.grey.shade600,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${_comments.length} comments',
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -402,7 +494,12 @@ class _ForumCommentsPageState extends State<ForumCommentsPage>
                           separatorBuilder: (_, __) => const SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             final comment = _comments[index];
-                            return _CommentCard(comment: comment);
+                            return _CommentCard(
+                              comment: comment,
+                              onEdit: () => _loadComments(),
+                              onDelete: () => _loadComments(),
+                              currentUserId: _currentUserId,
+                            );
                           },
                         ),
                       ),
@@ -504,8 +601,16 @@ class _ForumCommentsPageState extends State<ForumCommentsPage>
 
 class _CommentCard extends StatefulWidget {
   final ForumComment comment;
-  
-  const _CommentCard({required this.comment});
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+  final int currentUserId;
+
+  const _CommentCard({
+    required this.comment,
+    required this.onEdit,
+    required this.onDelete,
+    required this.currentUserId,
+  });
 
   @override
   State<_CommentCard> createState() => _CommentCardState();
@@ -543,46 +648,75 @@ class _CommentCardState extends State<_CommentCard>
         onTapUp: (_) => _animationController.reverse(),
         onTapCancel: () => _animationController.reverse(),
         child: Container(
+          margin: const EdgeInsets.only(left: 20), // Indent to show it's a reply
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: kCardShadow,
                 blurRadius: 8,
                 offset: const Offset(0, 2),
+                spreadRadius: 0,
               ),
             ],
+            border: Border.all(
+              color: kPrimary.withOpacity(0.1),
+              width: 1,
+            ),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Simple Author info
+                // Author info with reply indicator
                 Row(
                   children: [
-                    CircleAvatar(
-                      radius: 18,
-                      backgroundColor: Colors.grey.shade200,
-                      child: Text(
-                        widget.comment.authorName?.isNotEmpty == true 
-                            ? widget.comment.authorName![0].toUpperCase()
-                            : 'U',
-                        style: const TextStyle(
-                          color: kPrimary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                    // Reply indicator line
+                    Container(
+                      width: 3,
+                      height: 40,
+                      margin: const EdgeInsets.only(right: 12),
+                      decoration: BoxDecoration(
+                        color: kPrimary.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(1.5),
+                      ),
+                    ),
+
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [kPrimary.withOpacity(0.2), kAccent.withOpacity(0.2)],
+                        ),
+                        border: Border.all(
+                          color: kPrimary.withOpacity(0.3),
+                          width: 2,
+                        ),
+                      ),
+                      child: CircleAvatar(
+                        radius: 16,
+                        backgroundColor: Colors.grey.shade200,
+                        child: Text(
+                          widget.comment.author?.fullName.isNotEmpty == true
+                              ? widget.comment.author!.fullName[0].toUpperCase()
+                              : 'U',
+                          style: const TextStyle(
+                            color: kPrimary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            widget.comment.authorName ?? 'Unknown User',
+                            widget.comment.author?.fullName ?? 'Unknown User',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
@@ -611,18 +745,65 @@ class _CommentCardState extends State<_CommentCard>
                         ],
                       ),
                     ),
+                    if (widget.comment.userId == widget.currentUserId)
+                      PopupMenuButton<String>(
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            _showEditDialog();
+                          } else if (value == 'delete') {
+                            _showDeleteDialog();
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit, color: kPrimary, size: 16),
+                                SizedBox(width: 8),
+                                Text('Edit', style: TextStyle(color: kPrimary)),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete, color: Colors.red, size: 16),
+                                SizedBox(width: 8),
+                                Text('Delete', style: TextStyle(color: Colors.red)),
+                              ],
+                            ),
+                          ),
+                        ],
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: kPrimary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.more_vert,
+                            color: kPrimary,
+                            size: 14,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 12),
-                
-                // Simple Comment content
-                Text(
-                  widget.comment.content,
-                  style: TextStyle(
-                    color: kDark,
-                    fontSize: 14,
-                    height: 1.4,
+
+                // Comment content with indentation
+                Padding(
+                  padding: const EdgeInsets.only(left: 31), // Align with text after avatar
+                  child: Text(
+                    widget.comment.content,
+                    style: TextStyle(
+                      color: kDark,
+                      fontSize: 14,
+                      height: 1.4,
+                    ),
                   ),
                 ),
               ],
@@ -633,10 +814,217 @@ class _CommentCardState extends State<_CommentCard>
     );
   }
 
+  void _showEditDialog() {
+    final contentController = TextEditingController(text: widget.comment.content);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [kPrimary, kAccent],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.edit,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Edit Comment',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: contentController,
+                decoration: InputDecoration(
+                  hintText: 'Update your comment...',
+                  prefixIcon: Padding(
+                    padding: const EdgeInsets.only(bottom: 60),
+                    child: Icon(Icons.message, color: kPrimary.withOpacity(0.7)),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: kPrimary.withOpacity(0.3)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: kPrimary, width: 2),
+                  ),
+                  filled: true,
+                  fillColor: kLightGrey,
+                ),
+                maxLines: 5,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: kDark.withOpacity(0.7)),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (contentController.text.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Please enter comment content'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+                return;
+              }
+
+              try {
+                final dbHelper = DatabaseHelper();
+                await dbHelper.updateForumPost(
+                  postId: widget.comment.postId!,
+                  content: contentController.text.trim(),
+                );
+
+                Navigator.pop(context);
+
+                widget.onEdit();
+
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.white),
+                          SizedBox(width: 8),
+                          Text('Comment updated successfully!'),
+                        ],
+                      ),
+                      backgroundColor: kAccent,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error updating comment: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kPrimary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('Update'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.warning, color: Colors.orange),
+            SizedBox(width: 12),
+            Text('Delete Comment'),
+          ],
+        ),
+        content: Text('Are you sure you want to delete this comment? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                final dbHelper = DatabaseHelper();
+                await dbHelper.deleteForumPost(widget.comment.postId!);
+
+                Navigator.pop(context);
+
+                widget.onDelete();
+
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.white),
+                          SizedBox(width: 8),
+                          Text('Comment deleted successfully'),
+                        ],
+                      ),
+                      backgroundColor: kAccent,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error deleting comment: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _formatTimestamp(DateTime timestamp) {
     final now = DateTime.now();
     final difference = now.difference(timestamp);
-    
+
     if (difference.inDays > 0) {
       return '${difference.inDays}d ago';
     } else if (difference.inHours > 0) {

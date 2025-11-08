@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../db/database_helper.dart';
+import '../models/article.dart';
 import 'forum_comments_page.dart';
 
 // Color palette for better UI
@@ -16,8 +17,12 @@ class ForumTopic {
   final String description;
   final int createdBy;
   final String createdAt;
-  final String? authorName;
-  final String? authorEmail;
+  final User? author;
+  final int commentCount;
+  final String? firstComment;
+  final String? firstCommentAuthor;
+  final int likeCount;
+  final bool isLikedByCurrentUser;
 
   ForumTopic({
     this.topicId,
@@ -25,21 +30,32 @@ class ForumTopic {
     required this.description,
     required this.createdBy,
     required this.createdAt,
-    this.authorName,
-    this.authorEmail,
+    this.author,
+    this.commentCount = 0,
+    this.firstComment,
+    this.firstCommentAuthor,
+    this.likeCount = 0,
+    this.isLikedByCurrentUser = false,
   });
 
   factory ForumTopic.fromMap(Map<String, dynamic> map) {
+    User? author;
+    if (map['user_id'] != null) {
+      author = User.fromMap(map);
+    }
+
     return ForumTopic(
       topicId: map['topic_id'],
       title: map['title'],
       description: map['description'],
       createdBy: map['created_by'],
       createdAt: map['created_at'],
-      authorName: map['nom'] != null && map['prenom'] != null 
-          ? '${map['prenom']} ${map['nom']}' 
-          : null,
-      authorEmail: map['email'],
+      author: author,
+      commentCount: map['comment_count'] ?? 0,
+      firstComment: map['first_comment'],
+      firstCommentAuthor: map['first_comment_author'],
+      likeCount: map['like_count'] ?? 0,
+      isLikedByCurrentUser: map['is_liked_by_current_user'] == 1,
     );
   }
 }
@@ -167,7 +183,7 @@ class _ForumPageState extends State<ForumPage> with TickerProviderStateMixin {
       _currentUserId = await _dbHelper.getDefaultUserId();
       
       // Clear any existing sample topics for a clean start
-      await _dbHelper.clearSampleTopics();
+      // await _dbHelper.clearSampleTopics(); // Commented out to preserve data between app runs
       
       // Load forum topics (only user-created ones)
       await _loadForumTopics();
@@ -198,7 +214,7 @@ class _ForumPageState extends State<ForumPage> with TickerProviderStateMixin {
       // Debug print to see what we're getting
       print('Loaded ${_forumTopics.length} forum topics');
       for (var topic in _forumTopics) {
-        print('Topic: ${topic.title} by ${topic.authorName}');
+        print('Topic: ${topic.title} by ${topic.author?.fullName ?? 'Unknown'}');
       }
     } catch (e) {
       setState(() {
@@ -465,6 +481,9 @@ class _ForumPageState extends State<ForumPage> with TickerProviderStateMixin {
                             return _ForumTopicCard(
                               topic: topic,
                               onDelete: () => _deleteTopic(topic),
+                              onEdit: () => _loadForumTopics(),
+                              onLikeToggle: () => _loadForumTopics(),
+                              currentUserId: _currentUserId,
                             );
                           },
                         ),
@@ -767,10 +786,16 @@ class _ForumPageState extends State<ForumPage> with TickerProviderStateMixin {
 class _ForumTopicCard extends StatefulWidget {
   final ForumTopic topic;
   final VoidCallback onDelete;
-  
+  final VoidCallback onEdit;
+  final VoidCallback onLikeToggle;
+  final int currentUserId;
+
   const _ForumTopicCard({
     required this.topic,
     required this.onDelete,
+    required this.onEdit,
+    required this.onLikeToggle,
+    required this.currentUserId,
   });
 
   @override
@@ -855,8 +880,8 @@ class _ForumTopicCardState extends State<_ForumTopicCard>
                         radius: 20,
                         backgroundColor: Colors.grey.shade200,
                         child: Text(
-                          widget.topic.authorName?.isNotEmpty == true 
-                              ? widget.topic.authorName![0].toUpperCase()
+                          widget.topic.author?.fullName.isNotEmpty == true
+                              ? widget.topic.author!.fullName[0].toUpperCase()
                               : 'U',
                           style: const TextStyle(
                             color: kPrimary,
@@ -872,7 +897,7 @@ class _ForumTopicCardState extends State<_ForumTopicCard>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            widget.topic.authorName ?? 'Unknown User',
+                            widget.topic.author?.fullName ?? 'Unknown User',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
@@ -901,37 +926,50 @@ class _ForumTopicCardState extends State<_ForumTopicCard>
                         ],
                       ),
                     ),
-                    PopupMenuButton<String>(
-                      onSelected: (value) {
-                        if (value == 'delete') {
-                          _showDeleteDialog();
-                        }
-                      },
-                      itemBuilder: (context) => [
-                        const PopupMenuItem(
-                          value: 'delete',
-                          child: Row(
-                            children: [
-                              Icon(Icons.delete, color: Colors.red, size: 16),
-                              SizedBox(width: 8),
-                              Text('Delete', style: TextStyle(color: Colors.red)),
-                            ],
+                    if (widget.topic.createdBy == widget.currentUserId)
+                      PopupMenuButton<String>(
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            _showEditDialog();
+                          } else if (value == 'delete') {
+                            _showDeleteDialog();
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit, color: kPrimary, size: 16),
+                                SizedBox(width: 8),
+                                Text('Edit', style: TextStyle(color: kPrimary)),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete, color: Colors.red, size: 16),
+                                SizedBox(width: 8),
+                                Text('Delete', style: TextStyle(color: Colors.red)),
+                              ],
+                            ),
+                          ),
+                        ],
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: kPrimary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.more_vert,
+                            color: kPrimary,
+                            size: 16,
                           ),
                         ),
-                      ],
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: kPrimary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.more_vert,
-                          color: kPrimary,
-                          size: 16,
-                        ),
                       ),
-                    ),
                   ],
                 ),
                 
@@ -979,65 +1017,236 @@ class _ForumTopicCardState extends State<_ForumTopicCard>
                 ),
                 
                 const SizedBox(height: 12),
-                
+
                 // Actions
-                Row(
-                  children: [
-                    _ActionButton(
-                      icon: Icons.chat_bubble_outline,
-                      label: 'Comment',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ForumCommentsPage(
-                              topicId: widget.topic.topicId!,
-                              topicTitle: widget.topic.title,
-                              topicDescription: widget.topic.description,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 20),
-                    _ActionButton(
-                      icon: Icons.share_outlined,
-                      label: 'Share',
-                      onTap: () {},
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: kAccent.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.topic,
-                            size: 12,
-                            color: kAccent,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Topic',
-                            style: TextStyle(
-                              color: kAccent,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
+                Container(
+                  padding: const EdgeInsets.only(top: 12),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      top: BorderSide(
+                        color: kPrimary.withOpacity(0.1),
+                        width: 1,
                       ),
                     ),
-                  ],
+                  ),
+                  child: Row(
+                    children: [
+                      // Like button
+                      Expanded(
+                        child: _LikeButton(
+                          isLiked: widget.topic.isLikedByCurrentUser,
+                          likeCount: widget.topic.likeCount,
+                          onTap: () async {
+                            try {
+                              final dbHelper = DatabaseHelper();
+                              if (widget.topic.isLikedByCurrentUser) {
+                                await dbHelper.removeForumLike(
+                                  topicId: widget.topic.topicId!,
+                                  userId: widget.currentUserId,
+                                );
+                              } else {
+                                await dbHelper.addForumLike(
+                                  topicId: widget.topic.topicId!,
+                                  userId: widget.currentUserId,
+                                );
+                              }
+                              widget.onLikeToggle();
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error updating like: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                        ),
+                      ),
+                      // Comment button
+                      Expanded(
+                        child: _ActionButton(
+                          icon: Icons.chat_bubble_outline,
+                          label: widget.topic.commentCount > 0 ? '${widget.topic.commentCount}' : 'Comment',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ForumCommentsPage(
+                                  topicId: widget.topic.topicId!,
+                                  topicTitle: widget.topic.title,
+                                  topicDescription: widget.topic.description,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _showEditDialog() {
+    final titleController = TextEditingController(text: widget.topic.title);
+    final contentController = TextEditingController(text: widget.topic.description);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [kPrimary, kAccent],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.edit,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'Edit Post',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: InputDecoration(
+                  hintText: 'What\'s your post about?',
+                  prefixIcon: Icon(Icons.title, color: kPrimary.withOpacity(0.7)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: kPrimary.withOpacity(0.3)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: kPrimary, width: 2),
+                  ),
+                  filled: true,
+                  fillColor: kLightGrey,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: contentController,
+                decoration: InputDecoration(
+                  hintText: 'Share your thoughts and experiences...',
+                  prefixIcon: Padding(
+                    padding: const EdgeInsets.only(bottom: 60),
+                    child: Icon(Icons.message, color: kPrimary.withOpacity(0.7)),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: kPrimary.withOpacity(0.3)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: kPrimary, width: 2),
+                  ),
+                  filled: true,
+                  fillColor: kLightGrey,
+                ),
+                maxLines: 5,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: kDark.withOpacity(0.7)),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (titleController.text.trim().isEmpty || contentController.text.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Please fill in both title and content'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+                return;
+              }
+
+              try {
+                final dbHelper = DatabaseHelper();
+                await dbHelper.updateForumTopic(
+                  topicId: widget.topic.topicId!,
+                  title: titleController.text.trim(),
+                  description: contentController.text.trim(),
+                );
+
+                Navigator.pop(context);
+
+                widget.onEdit();
+
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.white),
+                          SizedBox(width: 8),
+                          Text('Topic updated successfully!'),
+                        ],
+                      ),
+                      backgroundColor: kAccent,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error updating topic: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kPrimary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('Update'),
+          ),
+        ],
       ),
     );
   }
@@ -1405,7 +1614,7 @@ class _ActionButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   final bool isLiked;
-  
+
   const _ActionButton({
     required this.icon,
     required this.label,
@@ -1419,24 +1628,15 @@ class _ActionButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: isLiked 
-                ? kPrimary.withOpacity(0.1) 
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            border: isLiked 
-                ? Border.all(color: kPrimary.withOpacity(0.3), width: 1)
-                : null,
-          ),
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 icon,
-                size: 16,
+                size: 18,
                 color: isLiked ? kPrimary : Colors.grey.shade600,
               ),
               const SizedBox(width: 6),
@@ -1444,7 +1644,52 @@ class _ActionButton extends StatelessWidget {
                 label,
                 style: TextStyle(
                   color: isLiked ? kPrimary : Colors.grey.shade600,
-                  fontSize: 13,
+                  fontSize: 14,
+                  fontWeight: isLiked ? FontWeight.w600 : FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LikeButton extends StatelessWidget {
+  final bool isLiked;
+  final int likeCount;
+  final VoidCallback onTap;
+
+  const _LikeButton({
+    required this.isLiked,
+    required this.likeCount,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isLiked ? Icons.favorite : Icons.favorite_border,
+                size: 18,
+                color: isLiked ? kPrimary : Colors.grey.shade600,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                likeCount > 0 ? '$likeCount' : 'Like',
+                style: TextStyle(
+                  color: isLiked ? kPrimary : Colors.grey.shade600,
+                  fontSize: 14,
                   fontWeight: isLiked ? FontWeight.w600 : FontWeight.w500,
                 ),
               ),

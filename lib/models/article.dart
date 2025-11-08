@@ -38,3 +38,50 @@ class Article {
     );
   }
 }
+
+// User Model
+class User {
+  final int userId;
+  final String nom;
+  final String prenom;
+  final String email;
+  final String motDePasse;
+  final String? telephone;
+  final String? dateNaissance;
+  final String? sexe;
+  final String? adresse;
+  final String role;
+  final String? specialite;
+
+  User({
+    required this.userId,
+    required this.nom,
+    required this.prenom,
+    required this.email,
+    required this.motDePasse,
+    this.telephone,
+    this.dateNaissance,
+    this.sexe,
+    this.adresse,
+    required this.role,
+    this.specialite,
+  });
+
+  factory User.fromMap(Map<String, dynamic> map) {
+    return User(
+      userId: map['user_id'] ?? 0,
+      nom: map['nom'] ?? '',
+      prenom: map['prenom'] ?? '',
+      email: map['email'] ?? '',
+      motDePasse: map['mot_de_passe'] ?? '',
+      telephone: map['telephone'],
+      dateNaissance: map['date_naissance'],
+      sexe: map['sexe'],
+      adresse: map['adresse'],
+      role: map['role'] ?? '',
+      specialite: map['specialite'],
+    );
+  }
+
+  String get fullName => '$prenom $nom';
+}

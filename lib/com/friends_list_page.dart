@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'chat_conversation_page.dart';
 import '../db/database_helper.dart';
+import '../models/article.dart';
 import 'package:firebase_database/firebase_database.dart';
 
 // Color palette
@@ -32,14 +33,14 @@ class Friend {
   });
 
   factory Friend.fromMap(Map<String, dynamic> map) {
-    // Use real data from database, not random messages
-    final fullName = '${map['prenom']} ${map['nom']}';
+    // Create User instance first
+    final user = User.fromMap(map);
     final statuses = ['online', 'away', 'offline'];
     final randomStatus = statuses[map['user_id']! % 3];
 
     return Friend(
-      userId: map['user_id'] as int,
-      name: fullName,
+      userId: user.userId,
+      name: user.fullName,
       avatar: 'assets/images/splash.png',
       status: randomStatus,
       lastMessage: 'Start a conversation!', // Will be updated from Firebase
@@ -66,12 +67,13 @@ class _FriendsListPageState extends State<FriendsListPage> {
   List<Friend> _filteredFriends = [];
   int? _currentUserId;
 
-  // Static exclusion for testing - change this to exclude different users
-  final int _excludedUserId = 2; // Exclude user with ID 2 (John Smith)
+  // Dynamic exclusion based on current user
+  int? _excludedUserId; // Will be set to current user ID
 
   Future<void> _loadCurrentUser() async {
     try {
       _currentUserId = await _dbHelper.getDefaultUserId();
+      _excludedUserId = _currentUserId; // Exclude current user from friends list
       debugPrint('👤 FriendsListPage loaded current user ID: $_currentUserId');
       await _loadFriends();
       await _loadConversationsFromFirebase();
@@ -79,6 +81,7 @@ class _FriendsListPageState extends State<FriendsListPage> {
     } catch (e) {
       debugPrint('❌ Error loading current user in FriendsListPage: $e');
       _currentUserId = 1; // Fallback
+      _excludedUserId = _currentUserId; // Exclude current user from friends list
       await _loadFriends();
     }
   }
@@ -109,12 +112,12 @@ class _FriendsListPageState extends State<FriendsListPage> {
 
       final friendsList = <Friend>[];
       for (var user in users) {
-        // Exclude the specified user ID (static exclusion for testing)
+        // Exclude the current user from friends list
         if (user['user_id'] != _excludedUserId) {
           debugPrint('➕ Adding friend: ${user['prenom']} ${user['nom']} (ID: ${user['user_id']})');
           friendsList.add(Friend.fromMap(user));
         } else {
-          debugPrint('🚫 Excluding user: ${user['prenom']} ${user['nom']} (ID: ${user['user_id']}) - Static exclusion');
+          debugPrint('🚫 Excluding user: ${user['prenom']} ${user['nom']} (ID: ${user['user_id']}) - Current user');
         }
       }
 
@@ -124,7 +127,7 @@ class _FriendsListPageState extends State<FriendsListPage> {
         _isLoading = false;
       });
 
-      debugPrint('👥 FriendsListPage loaded ${_friends.length} friends (excluding user ID $_excludedUserId)');
+      debugPrint('👥 FriendsListPage loaded ${_friends.length} friends (excluding current user ID $_excludedUserId)');
     } catch (e) {
       setState(() {
         _isLoading = false;

@@ -738,72 +738,75 @@ class _VerticalArticleCard extends StatelessWidget {
   const _VerticalArticleCard(
       {required this.title, required this.subtitle, required this.image});
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: kWhite,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: kDark.withOpacity(0.06),
-            blurRadius: 15,
-            offset: const Offset(0, 4),
+
+@override
+Widget build(BuildContext context) {
+  return Container(
+    margin: const EdgeInsets.only(bottom: 16),
+    decoration: BoxDecoration(
+      color: kWhite,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: [
+        BoxShadow(
+          color: kDark.withOpacity(0.06),
+          blurRadius: 15,
+          offset: const Offset(0, 4),
+        ),
+        BoxShadow(
+          color: kPrimary.withOpacity(0.03),
+          blurRadius: 8,
+          offset: const Offset(0, 2),
+        ),
+      ],
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // 🖼 Left image
+        Container(
+          width: 120,
+          height: 120,
+          decoration: BoxDecoration(
+            borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+            boxShadow: [
+              BoxShadow(
+                color: kDark.withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(2, 0),
+              ),
+            ],
           ),
-          BoxShadow(
-            color: kPrimary.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+          child: ClipRRect(
+            borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+            child: image.startsWith('http')
+                ? Image.network(image, fit: BoxFit.cover)
+                : Image.asset(image, fit: BoxFit.cover),
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
-              boxShadow: [
-                BoxShadow(
-                  color: kDark.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(2, 0),
+        ),
+
+        // 📰 Text content
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: kDark,
+                        height: 1.3,
+                      ),
                 ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
-              child: image.startsWith('http')
-                  ? Image.network(image, fit: BoxFit.cover)
-                  : Image.asset(image, fit: BoxFit.cover),
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleSmall
-                        ?.copyWith(
-                          fontWeight: FontWeight.w700, 
-                          color: kDark,
-                          height: 1.3,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Container(
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: kPrimary.withOpacity(0.1),
@@ -811,6 +814,7 @@ class _VerticalArticleCard extends StatelessWidget {
                         ),
                         child: Text(
                           subtitle.split(' • ')[0],
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: kPrimary,
                             fontSize: 11,
@@ -818,28 +822,31 @@ class _VerticalArticleCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.access_time,
-                        color: kDark.withOpacity(0.5),
-                        size: 12,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(Icons.access_time, color: kDark.withOpacity(0.5), size: 12),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
                         subtitle.split(' • ')[1],
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: kDark.withOpacity(0.6),
                           fontSize: 11,
                         ),
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
+        ),
+
+        // ➡️ Right arrow (fixed size)
+        SizedBox(
+          width: 32, // limit space to prevent overflow
+          child: Center(
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
@@ -853,8 +860,10 @@ class _VerticalArticleCard extends StatelessWidget {
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
+
 }

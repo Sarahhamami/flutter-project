@@ -21,7 +21,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3, // Updated to version 3 for ForumLike table
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -57,6 +57,24 @@ class DatabaseHelper {
         )
       ''');
       print("✅ Chat tables added via upgrade");
+    }
+
+    // Add ForumLike table for version 3
+    if (oldVersion < 3) {
+      print("🔄 Database version 3 - adding ForumLike table");
+
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS ForumLike(
+          like_id INTEGER PRIMARY KEY AUTOINCREMENT,
+          topic_id INTEGER NOT NULL,
+          user_id INTEGER NOT NULL,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY(topic_id) REFERENCES ForumTopic(topic_id),
+          FOREIGN KEY(user_id) REFERENCES Utilisateur(user_id),
+          UNIQUE(topic_id, user_id)
+        )
+      ''');
+      print("✅ ForumLike table added via upgrade");
     }
   }
 
@@ -357,6 +375,20 @@ await db.execute('''
   )
 ''');
 print("✅ Table ActivitePas created");
+
+await db.execute('''
+  CREATE TABLE ForumLike(
+    like_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    topic_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY(topic_id) REFERENCES ForumTopic(topic_id),
+    FOREIGN KEY(user_id) REFERENCES Utilisateur(user_id),
+    UNIQUE(topic_id, user_id)
+  )
+''');
+print("✅ Table ForumLike created");
+
     print("🎉 Database and tables created successfully!");
 
     // Create a default user for testing
@@ -445,15 +477,41 @@ print("✅ Table ActivitePas created");
 
   Future<List<Map<String, dynamic>>> getAllForumTopics() async {
     final db = await database;
+    final currentUserId = await getDefaultUserId();
     return await db.rawQuery('''
-      SELECT ft.*, 
-             COALESCE(u.nom, 'User') as nom,
-             COALESCE(u.prenom, 'Default') as prenom,
-             COALESCE(u.email, 'user@example.com') as email
-      FROM ForumTopic ft
-      LEFT JOIN Utilisateur u ON ft.created_by = u.user_id
-      ORDER BY ft.created_at DESC
-    ''');
+      SELECT ft.*,
+              u.user_id, u.nom, u.prenom, u.email, u.mot_de_passe, u.telephone,
+              u.date_naissance, u.sexe, u.adresse, u.role, u.specialite,
+              COALESCE(comment_counts.comment_count, 0) as comment_count,
+              first_comments.first_comment,
+              first_comments.first_comment_author,
+              COALESCE(like_counts.like_count, 0) as like_count,
+              CASE WHEN user_likes.like_id IS NOT NULL THEN 1 ELSE 0 END as is_liked_by_current_user
+       FROM ForumTopic ft
+       LEFT JOIN Utilisateur u ON ft.created_by = u.user_id
+       LEFT JOIN (
+         SELECT topic_id, COUNT(*) as comment_count
+         FROM ForumPost
+         GROUP BY topic_id
+       ) comment_counts ON ft.topic_id = comment_counts.topic_id
+       LEFT JOIN (
+         SELECT fp.topic_id,
+                fp.content as first_comment,
+                COALESCE(u.prenom || ' ' || u.nom, 'Unknown User') as first_comment_author
+         FROM ForumPost fp
+         LEFT JOIN Utilisateur u ON fp.user_id = u.user_id
+         WHERE fp.created_at = (
+           SELECT MIN(created_at) FROM ForumPost WHERE topic_id = fp.topic_id
+         )
+       ) first_comments ON ft.topic_id = first_comments.topic_id
+       LEFT JOIN (
+         SELECT topic_id, COUNT(*) as like_count
+         FROM ForumLike
+         GROUP BY topic_id
+       ) like_counts ON ft.topic_id = like_counts.topic_id
+       LEFT JOIN ForumLike user_likes ON ft.topic_id = user_likes.topic_id AND user_likes.user_id = ?
+       ORDER BY ft.created_at DESC
+    ''', [currentUserId]);
   }
 
   Future<List<Map<String, dynamic>>> getForumTopicsByUser(int userId) async {
@@ -580,11 +638,11 @@ print("✅ Table ActivitePas created");
   // Get forum statistics
   Future<Map<String, int>> getForumStats() async {
     final db = await database;
-    
+
     final topicCount = await db.rawQuery('SELECT COUNT(*) as count FROM ForumTopic');
     final postCount = await db.rawQuery('SELECT COUNT(*) as count FROM ForumPost');
     final userCount = await db.rawQuery('SELECT COUNT(DISTINCT created_by) as count FROM ForumTopic');
-    
+
     return {
       'topics': topicCount.first['count'] as int,
       'posts': postCount.first['count'] as int,
@@ -592,12 +650,67 @@ print("✅ Table ActivitePas created");
     };
   }
 
+  // Forum Like Operations
+  Future<int> addForumLike({
+    required int topicId,
+    required int userId,
+  }) async {
+    final db = await database;
+    try {
+      return await db.insert(
+        'ForumLike',
+        {
+          'topic_id': topicId,
+          'user_id': userId,
+          'created_at': DateTime.now().toIso8601String(),
+        },
+      );
+    } catch (e) {
+      // Handle unique constraint violation (user already liked this topic)
+      return 0;
+    }
+  }
+
+  Future<int> removeForumLike({
+    required int topicId,
+    required int userId,
+  }) async {
+    final db = await database;
+    return await db.delete(
+      'ForumLike',
+      where: 'topic_id = ? AND user_id = ?',
+      whereArgs: [topicId, userId],
+    );
+  }
+
+  Future<bool> hasUserLikedTopic({
+    required int topicId,
+    required int userId,
+  }) async {
+    final db = await database;
+    final result = await db.query(
+      'ForumLike',
+      where: 'topic_id = ? AND user_id = ?',
+      whereArgs: [topicId, userId],
+    );
+    return result.isNotEmpty;
+  }
+
+  Future<int> getTopicLikeCount(int topicId) async {
+    final db = await database;
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM ForumLike WHERE topic_id = ?',
+      [topicId],
+    );
+    return result.first['count'] as int? ?? 0;
+  }
+
   // Get default user ID for testing - CHANGE THIS TO SWITCH USERS
   Future<int> getDefaultUserId() async {
     // For testing different users, change this return value
-    // User 1: return 1
-    // User 2: return 2
-    // User 3: return 3
+    // User 1: return 1 (Default User)
+    // User 2: return 2 (John Smith)
+    // User 3: return 3 (Emma Johnson)
     return 2; // Change this number to test as different users
 
     // Uncomment below to use actual database lookup
