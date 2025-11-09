@@ -3,6 +3,7 @@ import 'package:flutter_application_1/Appointments/appointments_page.dart';
 import 'package:flutter_application_1/com/articles_display.dart';
 import 'package:flutter_application_1/com/friends_list_page.dart';
 import 'package:flutter_application_1/db/database_helper.dart';
+import 'package:flutter_application_1/sos/admin_menu_page.dart';
 import 'package:flutter_application_1/sos/emergency_service.dart';
 import 'package:flutter_application_1/sos/first_aid_chatbot_page.dart';
 import 'package:flutter_application_1/user/profile_page.dart';
@@ -291,10 +292,15 @@ class BottomNavBar extends StatelessWidget {
                 context, MaterialPageRoute(builder: (_) => const FirstAidChatbotPage()));
                 
             break;
-          case 5:
+             case 5:
+            Navigator.push(
+                context, MaterialPageRoute(builder: (_) => const AdminMenuPage()));
+                
+            break;
+          case 6:
             _handleSOSButton(context);
             break;
-            case 6:
+            case 7:
             showMenu(
               context: context,
               position: RelativeRect.fromLTRB(100, 500, 40, 100), // adjust to position near your navbar item
@@ -369,7 +375,8 @@ class BottomNavBar extends StatelessWidget {
         BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         BottomNavigationBarItem(
             icon: Icon(Icons.chat), label: 'ChatBot'),
-      
+       BottomNavigationBarItem(
+            icon: Icon(Icons.admin_panel_settings), label: 'Pannel'),
         BottomNavigationBarItem(
           icon: Icon(Icons.emergency, color: Colors.grey),
           label: 'SOS',
