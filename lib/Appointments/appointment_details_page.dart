@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/custom_app_bar.dart';
 import '../repositories/appointment_repository.dart';
 import '../user/current_user.dart';
 
@@ -42,10 +43,7 @@ class AppointmentDetailsPage extends StatelessWidget {
     final isDoctor = user?['role'] == 'Doctor';
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Appointment Details'),
-        backgroundColor: const Color(0xFF0DCAF0),
-      ),
+      appBar: customAppBar(context),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Card(

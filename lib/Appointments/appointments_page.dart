@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/Appointments/add_appointment_page.dart';
 import 'package:flutter_application_1/Appointments/appointment_details_page.dart';
+import 'package:flutter_application_1/com/articles_display.dart';
+import 'package:flutter_application_1/com/friends_list_page.dart';
+import 'package:flutter_application_1/com/navbar.dart';
+import 'package:flutter_application_1/custom_app_bar.dart';
+import 'package:flutter_application_1/custom_bottom.dart';
 import 'package:flutter_application_1/repositories/appointment_repository.dart';
 import 'package:flutter_application_1/user/current_user.dart';
+import 'package:flutter_application_1/user/profile_page.dart';
 import 'package:intl/intl.dart';
 
 class AppointmentsPage extends StatefulWidget {
@@ -19,7 +25,45 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
 
   final TextEditingController _searchController = TextEditingController();
   DateTime? _selectedDate;
+  int _selectedIndex = 2;
+  void _onItemTapped(int index) {
+  setState(() {
+    _selectedIndex = index;
+  });
 
+  switch (index) {
+    case 0: // Articles / Home
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const ArticlesDisplay()),
+      );
+      break;
+
+    case 1: // Friends
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const FriendsListPage()),
+      );
+      break;
+
+    case 2: // Appointments
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const AppointmentsPage()),
+      );
+      break;
+
+    case 3: // Profile
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const ProfilePage()),
+      );
+      break;
+
+    default:
+      break;
+  }
+}
   Future<void> _updateStatus(int id, String newStatus) async {
     await _appointmentRepo.updateAppointmentStatus(id, newStatus);
     _loadAppointments();
@@ -107,10 +151,7 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
     final isDoctor = user?['role'] == 'Doctor';
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Appointments'),
-        backgroundColor: blue,
-      ),
+      appBar: customAppBar(context),
       body: Column(
         children: [
           // 🔍 Search bar + Filter
@@ -242,6 +283,8 @@ class _AppointmentsPageState extends State<AppointmentsPage> {
               },
               child: const Icon(Icons.add),
             ),
+                      bottomNavigationBar: BottomNavBar(currentIndex: 2),
+
     );
   }
 }

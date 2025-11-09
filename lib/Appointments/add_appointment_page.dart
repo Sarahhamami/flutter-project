@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/custom_app_bar.dart';
 import '../repositories/appointment_repository.dart';
 import '../repositories/user_repository.dart';
 import '../user/current_user.dart';
@@ -146,10 +147,7 @@ String _convertTo24h(String time) {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add Appointment'),
-        backgroundColor: const Color(0xFF0dcaf0),
-      ),
+      appBar: customAppBar(context),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: _isLoadingDoctors

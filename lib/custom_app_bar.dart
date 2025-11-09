@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/Appointments/appointments_page.dart';
+import 'package:flutter_application_1/sos/analytics_page.dart';
+import 'package:flutter_application_1/sos/emergency_contacts_page.dart';
+import 'package:flutter_application_1/sos/medication_page.dart';
+import 'package:flutter_application_1/sos/user_medical_record_page.dart';
 import 'package:flutter_application_1/user/current_user.dart';
 import '../user/login_page.dart';
-import '../user/profile_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 PreferredSizeWidget customAppBar(BuildContext context) {
@@ -11,19 +13,30 @@ PreferredSizeWidget customAppBar(BuildContext context) {
 
   return AppBar(
     backgroundColor: const Color(0xFF0dcaf0),
-    title: Text('Welcome $firstName'),
+    title: const Text('Health Tracker'),
     actions: [
       PopupMenuButton<String>(
         onSelected: (value) async { // ✅ make the callback async
-          if (value == 'Profile') {
+            if (value == 'Emergency Contacts') {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const ProfilePage()),
+              MaterialPageRoute(builder: (_) => const EmergencyContactsPage()),
             );
-          }  else if (value == 'Appointments') {
+          } 
+           else if (value == 'Analytics') {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const AppointmentsPage()),
+              MaterialPageRoute(builder: (_) => const AnalyticsPage()),
+            );
+          } else if (value == 'Medication') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MedicationPage()),
+            );
+          } else if (value == 'Medical Records') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const UserMedicalRecordPage()),
             );
           }
           else if (value == 'Logout') {
@@ -42,8 +55,10 @@ PreferredSizeWidget customAppBar(BuildContext context) {
           }
         },
         itemBuilder: (context) => const [
-          PopupMenuItem(value: 'Profile', child: Text('Profile')),
-          PopupMenuItem(value: 'Appointments', child: Text('Appointments')),
+          PopupMenuItem(value: 'Emergency Contacts', child: Text('Emergency Contacts')),
+          PopupMenuItem(value: 'Medical Records', child: Text('Medical Records')),
+          PopupMenuItem(value: 'Medication', child: Text('Medication')),
+          PopupMenuItem(value: 'Analytics', child: Text('Analytics')),
           PopupMenuItem(value: 'Logout', child: Text('Logout')),
         ],
         child: Padding(

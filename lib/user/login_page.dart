@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/com/articles_display.dart';
 import 'package:flutter_application_1/home_page.dart';
 import 'package:flutter_application_1/user/current_user.dart';
 import 'package:flutter_application_1/user/forget_password.dart';
@@ -68,7 +69,7 @@ if (_rememberMe) {
     // ✅ Login successful → go to HomePage
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const HomePage()),
+      MaterialPageRoute(builder: (_) => const ArticlesDisplay()),
     );
 
     setState(() => _isLoading = false);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/custom_app_bar.dart';
 import 'package:flutter_application_1/repositories/user_repository.dart';
 import '../user/current_user.dart';
 
@@ -35,13 +36,7 @@ class _UpdateProfilePageState extends State<UpdateProfilePage> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0DCAF0),
-        title: const Text("Update Profile",
-            style: TextStyle(color: Colors.white)),
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
+     appBar: customAppBar(context),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Form(

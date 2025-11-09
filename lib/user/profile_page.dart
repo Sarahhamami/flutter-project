@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/Appointments/appointments_page.dart';
+import 'package:flutter_application_1/com/articles_display.dart';
+import 'package:flutter_application_1/com/friends_list_page.dart';
+import 'package:flutter_application_1/com/navbar.dart';
 import 'package:flutter_application_1/custom_app_bar.dart';
+import 'package:flutter_application_1/custom_bottom.dart';
 import 'package:flutter_application_1/repositories/user_repository.dart';
 import 'package:flutter_application_1/user/update_profile_page.dart';
 import '../user/current_user.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final user = CurrentUser().getUser();
@@ -17,8 +27,47 @@ class ProfilePage extends StatelessWidget {
         appBar: customAppBar(context),
         body: const Center(child: Text("No user found.")),
       );
+      
     }
+  int _selectedIndex = 3;
+  void _onItemTapped(int index) {
+  setState(() {
+    _selectedIndex = index;
+  });
 
+  switch (index) {
+    case 0: // Articles / Home
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const ArticlesDisplay()),
+      );
+      break;
+
+    case 1: // Friends
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const FriendsListPage()),
+      );
+      break;
+
+    case 2: // Appointments
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const AppointmentsPage()),
+      );
+      break;
+
+    case 3: // Profile
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const ProfilePage()),
+      );
+      break;
+
+    default:
+      break;
+  }
+}
     return Scaffold(
       appBar: customAppBar(context),
       body: SingleChildScrollView(
@@ -129,6 +178,8 @@ class ProfilePage extends StatelessWidget {
           ],
         ),
       ),
+                bottomNavigationBar: BottomNavBar(currentIndex: 3),
+
     );
   }
 

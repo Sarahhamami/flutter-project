@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/com/articles_display.dart';
 import 'dart:async';
 import 'package:flutter_application_1/user/login_page.dart';
-import 'package:flutter_application_1/home_page.dart';
 import 'package:flutter_application_1/user/current_user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../repositories/user_repository.dart';
@@ -34,7 +34,7 @@ class _SplashScreenState extends State<SplashScreen> {
         CurrentUser().setUser(user);
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const HomePage()),
+          MaterialPageRoute(builder: (_) => const ArticlesDisplay()),
         );
         return;
       }
