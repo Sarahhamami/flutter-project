@@ -6,6 +6,13 @@ import 'package:flutter_application_1/db/database_helper.dart';
 import 'package:flutter_application_1/sos/emergency_service.dart';
 import 'package:flutter_application_1/sos/first_aid_chatbot_page.dart';
 import 'package:flutter_application_1/user/profile_page.dart';
+import 'package:flutter_application_1/wellness/analytics_screen.dart';
+import 'package:flutter_application_1/wellness/breathing_exercises_screen.dart';
+import 'package:flutter_application_1/wellness/meditation_screen.dart';
+import 'package:flutter_application_1/wellness/menstrual_cycle_screen.dart';
+import 'package:flutter_application_1/wellness/mood_tracker_screen.dart';
+import 'package:flutter_application_1/wellness/sleep_tracker_screen.dart';
+import 'package:flutter_application_1/wellness/wellness_home.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../theme/colors.dart';
 
@@ -282,10 +289,76 @@ class BottomNavBar extends StatelessWidget {
           case 4:
             Navigator.push(
                 context, MaterialPageRoute(builder: (_) => const FirstAidChatbotPage()));
+                
             break;
           case 5:
             _handleSOSButton(context);
             break;
+            case 6:
+            showMenu(
+              context: context,
+              position: RelativeRect.fromLTRB(100, 500, 40, 100), // adjust to position near your navbar item
+              items: [
+                PopupMenuItem(
+                  child: Text("Wellness"),
+                  onTap: () {
+                    Future.delayed(Duration.zero, () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => WellnessHomeScreen()));
+                    });
+                  },
+                ),
+                PopupMenuItem(
+                  child: Text("Menstrual Cycle"),
+                  onTap: () {
+                    Future.delayed(Duration.zero, () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => MenstrualCycleScreen()));
+                    });
+                  },
+                ),
+                PopupMenuItem(
+                  child: Text("Meditation"),
+                  onTap: () {
+                    Future.delayed(Duration.zero, () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => MeditationScreen()));
+                    });
+                  },
+                ),
+                 PopupMenuItem(
+                  child: Text("Mood Tracker"),
+                  onTap: () {
+                    Future.delayed(Duration.zero, () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => MoodTrackerScreen()));
+                    });
+                  },
+                ),
+                 PopupMenuItem(
+                  child: Text("Sleep Tracker"),
+                  onTap: () {
+                    Future.delayed(Duration.zero, () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => SleepTrackerScreen()));
+                    });
+                  },
+                ),
+                 PopupMenuItem(
+                  child: Text("Analytics"),
+                  onTap: () {
+                    Future.delayed(Duration.zero, () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => AnalyticsScreen()));
+                    });
+                  },
+                ),
+                 PopupMenuItem(
+                  child: Text("Breathing Exercises"),
+                  onTap: () {
+                    Future.delayed(Duration.zero, () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => BreathingExercisesScreen()));
+                    });
+                  },
+                ),
+              ],
+            );
+            break;
+
         }
       },
       items: const [
@@ -296,11 +369,13 @@ class BottomNavBar extends StatelessWidget {
         BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         BottomNavigationBarItem(
             icon: Icon(Icons.chat), label: 'ChatBot'),
-
+      
         BottomNavigationBarItem(
           icon: Icon(Icons.emergency, color: Colors.grey),
           label: 'SOS',
-        ),
+          
+        ),  BottomNavigationBarItem(
+            icon: Icon(Icons.health_and_safety), label: 'Wellness'),
       ],
     );
   }

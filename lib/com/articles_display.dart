@@ -353,7 +353,7 @@ class _ArticlesDisplayState extends State<ArticlesDisplay> {
     final firstName = user?['prenom'] ?? 'Guest';
     return Scaffold(
       appBar: customAppBar(context),
-      bottomNavigationBar: BottomNavBar(currentIndex: 0),
+      bottomNavigationBar: BottomNavBar(currentIndex: 0), //navigation bar
       backgroundColor: const Color(0xFFF8F9FA), // Light grey background
       body: SafeArea(
         child: Padding(

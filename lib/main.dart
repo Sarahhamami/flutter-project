@@ -7,6 +7,9 @@ import 'package:flutter_application_1/splash_screen.dart';
 //import 'package:sqflite/sqflite.dart';
 import 'db/database_helper.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:path/path.dart';
+import 'dart:io';
+import 'package:sqflite/sqflite.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
@@ -26,7 +29,11 @@ void main() async {
     print("Please check your Firebase configuration");
   }
   // 🔹 Delete old database for a fresh start (optional, dev only)
-
+/*final dbPath = join(await getDatabasesPath(), 'app.db');
+  if (await File(dbPath).exists()) {
+    await deleteDatabase(dbPath);
+    print("🗑️ Old database deleted for fresh start");
+  }*/
 
   // 🔹 Initialize database
   final db = await DatabaseHelper().database;
