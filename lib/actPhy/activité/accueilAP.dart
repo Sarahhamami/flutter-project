@@ -12,6 +12,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:sqflite/sqflite.dart';
+import '../../com/articles_display.dart';
 import '../../db/database_helper.dart';
 
 // Activity model to map database results
@@ -99,11 +100,16 @@ class _AccueilAPState extends State<AccueilAP> with TickerProviderStateMixin {
   // Load activities from database
   Future<void> _loadActivities() async {
     try {
-      final db = await _databaseHelper.database;
+      
+        final db = await _databaseHelper.database;
+
+        // Get the user ID from DatabaseHelper
+        final dbHelper = DatabaseHelper();
+        int userId = await dbHelper.getDefaultUserId();
       final List<Map<String, dynamic>> maps = await db.query(
         'Activite_physique',
         where: 'id_utilisateur = ?',
-        whereArgs: [1], // Assuming user ID 1 for now
+        whereArgs: [userId], // Assuming user ID 1 for now
       );
 
       setState(() {
@@ -181,6 +187,17 @@ class _AccueilAPState extends State<AccueilAP> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ArticlesDisplay()),
+          ),
+        ),
+        title: const Text('Fitness'),
+        backgroundColor: const Color(0xFF20c997),
+      ),
       backgroundColor: const Color(0xFF20c997).withOpacity(0.7),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -367,16 +384,25 @@ final List<Map<String, dynamic>> buttons = [
           builder: (_) => ActivityHistoryPage(userId: userId),
         ),
       );
+        // reload when returning from the page
     },
   },
-  {
-    'icon': Icons.add_circle_outline,
-    'label': 'New Activity',
-    'onTap': (BuildContext context) => Navigator.push(
+ {
+  'icon': Icons.add_circle_outline,
+  'label': 'New Activity',
+  'onTap': (BuildContext context) async {
+    // Navigate to NewActivityPage and wait until the page is popped
+    await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => NewActivityPage()),
-    ),
+    );
+
+    // After returning, reload activities
+    // Make sure _loadActivities() is accessible here
+    _loadActivities();
   },
+},
+
   {
     'icon': Icons.directions_run,
     'label': 'Activities',

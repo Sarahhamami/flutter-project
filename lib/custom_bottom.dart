@@ -390,7 +390,7 @@ class BottomNavBar extends StatelessWidget {
         ),  BottomNavigationBarItem(
             icon: Icon(Icons.health_and_safety), label: 'Wellness'),
             BottomNavigationBarItem(
-            icon: Icon(Icons.health_and_safety), label: 'Physical Activity'),
+            icon: Icon(Icons.sports_gymnastics), label: 'Fitness'),
       ],
     );
   }
