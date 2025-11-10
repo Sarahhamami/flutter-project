@@ -2,6 +2,8 @@
 
 
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/actPhy/services/badge_service.dart';
+import 'package:flutter_application_1/actPhy/services/quote_service.dart';
 import 'package:flutter_application_1/splash_screen.dart';
 //import 'package:path/path.dart';
 //import 'package:sqflite/sqflite.dart';
@@ -12,6 +14,7 @@ import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await BadgeService().database;
   try {
     await Firebase.initializeApp(
       options: const FirebaseOptions(
@@ -70,6 +73,9 @@ void main() async {
   }
 
   print("\n✅ End of database log.\n");
+   WidgetsBinding.instance.addPostFrameCallback((_) {
+    QuoteService.startQuoteTimer();
+  });
 
   runApp(const TestApp());
 }

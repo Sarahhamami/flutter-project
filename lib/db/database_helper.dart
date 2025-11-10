@@ -212,6 +212,14 @@ await db.execute('''
     pas INTEGER,
     calories_brulees REAL,
     source_donnees TEXT,
+    exercise_name TEXT,   -- for weightlifting
+    sets INTEGER,         -- for weightlifting
+    reps INTEGER,         -- for weightlifting
+    weight REAL,          -- for weightlifting
+    stroke_type TEXT,     -- for swimming
+    laps INTEGER,         -- for swimming
+    avg_speed REAL,       -- for cycling
+    max_speed REAL,       -- for cycling
     FOREIGN KEY(id_utilisateur) REFERENCES Utilisateur(user_id)
   )
 ''');
