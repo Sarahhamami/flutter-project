@@ -1,20 +1,29 @@
-//import 'dart:io';
-
-
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:firebase_core/firebase_core.dart';
+
+// 🔹 Local imports
+import 'package:flutter_application_1/splash_screen.dart';
 import 'package:flutter_application_1/actPhy/services/badge_service.dart';
 import 'package:flutter_application_1/actPhy/services/quote_service.dart';
-import 'package:flutter_application_1/splash_screen.dart';
-//import 'package:path/path.dart';
-//import 'package:sqflite/sqflite.dart';
-import 'db/database_helper.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:path/path.dart';
-import 'dart:io';
-import 'package:sqflite/sqflite.dart';
-void main() async {
+import 'package:flutter_application_1/db/database_helper.dart';
+import 'package:flutter_application_1/services/nutrition_database_service.dart';
+import 'package:flutter_application_1/providers/dashboard_provider.dart';
+import 'package:flutter_application_1/providers/hydration_provider.dart';
+import 'package:flutter_application_1/providers/activity_provider.dart';
+import 'package:flutter_application_1/providers/recipe_provider.dart';
+import 'package:flutter_application_1/themes/app_theme.dart';
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 🔹 Initialize local badge database
   await BadgeService().database;
+
+  // 🔹 Initialize Firebase
   try {
     await Firebase.initializeApp(
       options: const FirebaseOptions(
@@ -29,40 +38,25 @@ void main() async {
     print("✅ Firebase initialized successfully");
   } catch (e) {
     print("⚠️ Firebase initialization error: $e");
-    print("Please check your Firebase configuration");
   }
-  // 🔹 Delete old database for a fresh start (optional, dev only)
-/*final dbPath = join(await getDatabasesPath(), 'app.db');
-  if (await File(dbPath).exists()) {
-    await deleteDatabase(dbPath);
-    print("🗑️ Old database deleted for fresh start");
-  }*/
 
-  // 🔹 Initialize database
+  // 🔹 Initialize main database
   final db = await DatabaseHelper().database;
   print("✅ Database initialized at: ${db.path}");
 
-  // 🔹 Fetch all tables and log their structure
-  final tables = await db.rawQuery(
-    "SELECT name FROM sqlite_master WHERE type='table';",
-  );
-
+  // 🔹 Log database structure
+  final tables = await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table';");
   print("\n📋 DATABASE CONTENT OVERVIEW");
   print("----------------------------------------");
-
   for (var table in tables) {
-    final tableName = table['name'];
-    if (tableName == 'android_metadata' || tableName == 'sqlite_sequence') continue;
-
-    print("\n🔸 Table: $tableName");
-
-    // Columns
-    final columns = await db.rawQuery("PRAGMA table_info($tableName);");
+    final name = table['name'];
+    if (name == 'android_metadata' || name == 'sqlite_sequence') continue;
+    final columns = await db.rawQuery("PRAGMA table_info($name);");
     final colNames = columns.map((c) => c['name']).toList();
+    print("\n🔸 Table: $name");
     print("   Columns: $colNames");
 
-    // Rows (should be empty)
-    final rows = await db.query(tableName as String);
+    final rows = await db.query(name as String);
     if (rows.isEmpty) {
       print("   (no rows)");
     } else {
@@ -71,23 +65,38 @@ void main() async {
       }
     }
   }
-
   print("\n✅ End of database log.\n");
-   WidgetsBinding.instance.addPostFrameCallback((_) {
+
+  // 🔹 Start quote service
+  WidgetsBinding.instance.addPostFrameCallback((_) {
     QuoteService.startQuoteTimer();
   });
 
-  runApp(const TestApp());
+  // 🔹 Initialize nutrition database
+  await NutritionDatabaseService.init();
+  print("✅ Nutrition Database Service initialized");
+
+  runApp(const UnifiedApp());
 }
 
-class TestApp extends StatelessWidget {
-  const TestApp({super.key});
+class UnifiedApp extends StatelessWidget {
+  const UnifiedApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: SplashScreen(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => DashboardProvider()),
+        ChangeNotifierProvider(create: (_) => HydrationProvider()),
+        ChangeNotifierProvider(create: (_) => ActivityProvider()),
+        ChangeNotifierProvider(create: (_) => RecipeProvider()),
+      ],
+      child: MaterialApp(
+        title: 'Health Tracker',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        home: const SplashScreen(),
+      ),
     );
   }
 }

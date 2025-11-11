@@ -1381,4 +1381,437 @@ print("✅ Table ForumLike created");
     final db = await database;
     await db.delete('Task');
   }
+
+  // ========================================
+  // NUTRITION CRUD OPERATIONS
+  // ========================================
+
+  // NutritionProfil Operations
+  Future<int> createNutritionProfile({
+    required int userId,
+    double? poids,
+    double? taille,
+    int? age,
+    String? objectif,
+    double? calorieObjectif,
+    double? proteineObjectif,
+    double? glucideObjectif,
+    double? lipideObjectif,
+    double? eauObjectif,
+    int? pasObjectif,
+  }) async {
+    final db = await database;
+    return await db.insert('NutritionProfil', {
+      'user_id': userId,
+      'poids': poids,
+      'taille': taille,
+      'age': age,
+      'objectif': objectif,
+      'calorie_objectif': calorieObjectif,
+      'proteine_objectif': proteineObjectif,
+      'glucide_objectif': glucideObjectif,
+      'lipide_objectif': lipideObjectif,
+      'eau_objectif': eauObjectif,
+      'pas_objectif': pasObjectif,
+    });
+  }
+
+  Future<Map<String, dynamic>?> getNutritionProfile(int userId) async {
+    final db = await database;
+    final result = await db.query(
+      'NutritionProfil',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+      limit: 1,
+    );
+    return result.isNotEmpty ? result.first : null;
+  }
+
+  Future<int> updateNutritionProfile({
+    required int nutritionId,
+    double? poids,
+    double? taille,
+    int? age,
+    String? objectif,
+    double? calorieObjectif,
+    double? proteineObjectif,
+    double? glucideObjectif,
+    double? lipideObjectif,
+    double? eauObjectif,
+    int? pasObjectif,
+  }) async {
+    final db = await database;
+    Map<String, dynamic> updateData = {};
+
+    if (poids != null) updateData['poids'] = poids;
+    if (taille != null) updateData['taille'] = taille;
+    if (age != null) updateData['age'] = age;
+    if (objectif != null) updateData['objectif'] = objectif;
+    if (calorieObjectif != null) updateData['calorie_objectif'] = calorieObjectif;
+    if (proteineObjectif != null) updateData['proteine_objectif'] = proteineObjectif;
+    if (glucideObjectif != null) updateData['glucide_objectif'] = glucideObjectif;
+    if (lipideObjectif != null) updateData['lipide_objectif'] = lipideObjectif;
+    if (eauObjectif != null) updateData['eau_objectif'] = eauObjectif;
+    if (pasObjectif != null) updateData['pas_objectif'] = pasObjectif;
+
+    return await db.update(
+      'NutritionProfil',
+      updateData,
+      where: 'nutrition_id = ?',
+      whereArgs: [nutritionId],
+    );
+  }
+
+  Future<int> deleteNutritionProfile(int nutritionId) async {
+    final db = await database;
+    // Delete related data first
+    await db.delete('Repas', where: 'nutrition_id = ?', whereArgs: [nutritionId]);
+    await db.delete('Hydratation', where: 'nutrition_id = ?', whereArgs: [nutritionId]);
+    await db.delete('ActivitePas', where: 'nutrition_id = ?', whereArgs: [nutritionId]);
+    return await db.delete('NutritionProfil', where: 'nutrition_id = ?', whereArgs: [nutritionId]);
+  }
+
+  // Repas (Meals) Operations
+  Future<int> createMeal({
+    required int nutritionId,
+    required String dateRepas,
+    required String typeRepas,
+    double? caloriesTotales,
+  }) async {
+    final db = await database;
+    return await db.insert('Repas', {
+      'nutrition_id': nutritionId,
+      'date_repas': dateRepas,
+      'type_repas': typeRepas,
+      'calories_totales': caloriesTotales,
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getMealsByNutritionId(int nutritionId) async {
+    final db = await database;
+    return await db.query(
+      'Repas',
+      where: 'nutrition_id = ?',
+      whereArgs: [nutritionId],
+      orderBy: 'date_repas DESC',
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getMealsForDate(int nutritionId, String date) async {
+    final db = await database;
+    return await db.query(
+      'Repas',
+      where: 'nutrition_id = ? AND date_repas = ?',
+      whereArgs: [nutritionId, date],
+      orderBy: 'type_repas ASC',
+    );
+  }
+
+  Future<int> updateMeal({
+    required int repasId,
+    String? typeRepas,
+    double? caloriesTotales,
+  }) async {
+    final db = await database;
+    Map<String, dynamic> updateData = {};
+
+    if (typeRepas != null) updateData['type_repas'] = typeRepas;
+    if (caloriesTotales != null) updateData['calories_totales'] = caloriesTotales;
+
+    return await db.update(
+      'Repas',
+      updateData,
+      where: 'repas_id = ?',
+      whereArgs: [repasId],
+    );
+  }
+
+  Future<int> deleteMeal(int repasId) async {
+    final db = await database;
+    // Delete related food associations
+    await db.delete('Repas_Aliment', where: 'repas_id = ?', whereArgs: [repasId]);
+    return await db.delete('Repas', where: 'repas_id = ?', whereArgs: [repasId]);
+  }
+
+  // Aliment (Foods) Operations
+  Future<int> createFood({
+    required String nom,
+    double? calories,
+    double? proteines,
+    double? glucides,
+    double? lipides,
+  }) async {
+    final db = await database;
+    return await db.insert('Aliment', {
+      'nom': nom,
+      'calories': calories,
+      'proteines': proteines,
+      'glucides': glucides,
+      'lipides': lipides,
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getAllFoods() async {
+    final db = await database;
+    return await db.query('Aliment', orderBy: 'nom ASC');
+  }
+
+  Future<Map<String, dynamic>?> getFoodById(int alimentId) async {
+    final db = await database;
+    final result = await db.query(
+      'Aliment',
+      where: 'aliment_id = ?',
+      whereArgs: [alimentId],
+      limit: 1,
+    );
+    return result.isNotEmpty ? result.first : null;
+  }
+
+  Future<List<Map<String, dynamic>>> searchFoods(String query) async {
+    final db = await database;
+    return await db.query(
+      'Aliment',
+      where: 'nom LIKE ?',
+      whereArgs: ['%$query%'],
+      orderBy: 'nom ASC',
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> searchFoodsByName(String query, {int limit = 20}) async {
+    final db = await database;
+    return await db.query(
+      'Aliment',
+      where: 'nom LIKE ?',
+      whereArgs: ['%$query%'],
+      orderBy: 'nom ASC',
+      limit: limit,
+    );
+  }
+
+  Future<int> updateFood({
+    required int alimentId,
+    String? nom,
+    double? calories,
+    double? proteines,
+    double? glucides,
+    double? lipides,
+  }) async {
+    final db = await database;
+    Map<String, dynamic> updateData = {};
+
+    if (nom != null) updateData['nom'] = nom;
+    if (calories != null) updateData['calories'] = calories;
+    if (proteines != null) updateData['proteines'] = proteines;
+    if (glucides != null) updateData['glucides'] = glucides;
+    if (lipides != null) updateData['lipides'] = lipides;
+
+    return await db.update(
+      'Aliment',
+      updateData,
+      where: 'aliment_id = ?',
+      whereArgs: [alimentId],
+    );
+  }
+
+  Future<int> deleteFood(int alimentId) async {
+    final db = await database;
+    // Delete associations with meals
+    await db.delete('Repas_Aliment', where: 'aliment_id = ?', whereArgs: [alimentId]);
+    return await db.delete('Aliment', where: 'aliment_id = ?', whereArgs: [alimentId]);
+  }
+
+  // Repas_Aliment (Meal-Food associations) Operations
+  Future<int> addFoodToMeal({
+    required int repasId,
+    required int alimentId,
+    required double quantite,
+  }) async {
+    final db = await database;
+    return await db.insert('Repas_Aliment', {
+      'repas_id': repasId,
+      'aliment_id': alimentId,
+      'quantite': quantite,
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getFoodsForMeal(int repasId) async {
+    final db = await database;
+    return await db.rawQuery('''
+      SELECT ra.*, a.nom, a.calories, a.proteines, a.glucides, a.lipides
+      FROM Repas_Aliment ra
+      JOIN Aliment a ON ra.aliment_id = a.aliment_id
+      WHERE ra.repas_id = ?
+    ''', [repasId]);
+  }
+
+  Future<int> updateFoodInMeal({
+    required int repasId,
+    required int alimentId,
+    required double quantite,
+  }) async {
+    final db = await database;
+    return await db.update(
+      'Repas_Aliment',
+      {'quantite': quantite},
+      where: 'repas_id = ? AND aliment_id = ?',
+      whereArgs: [repasId, alimentId],
+    );
+  }
+
+  Future<int> removeFoodFromMeal(int repasId, int alimentId) async {
+    final db = await database;
+    return await db.delete(
+      'Repas_Aliment',
+      where: 'repas_id = ? AND aliment_id = ?',
+      whereArgs: [repasId, alimentId],
+    );
+  }
+
+  // Hydratation Operations
+  Future<int> addHydrationEntry({
+    required int nutritionId,
+    required String dateJour,
+    required double quantiteBue,
+  }) async {
+    final db = await database;
+    return await db.insert('Hydratation', {
+      'nutrition_id': nutritionId,
+      'date_jour': dateJour,
+      'quantite_bue': quantiteBue,
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getHydrationForDate(int nutritionId, String date) async {
+    final db = await database;
+    return await db.query(
+      'Hydratation',
+      where: 'nutrition_id = ? AND date_jour = ?',
+      whereArgs: [nutritionId, date],
+      orderBy: 'date_jour DESC',
+    );
+  }
+
+  Future<double> getTotalHydrationForDate(int nutritionId, String date) async {
+    final db = await database;
+    final result = await db.rawQuery(
+      'SELECT SUM(quantite_bue) as total FROM Hydratation WHERE nutrition_id = ? AND date_jour = ?',
+      [nutritionId, date],
+    );
+    return result.first['total'] as double? ?? 0.0;
+  }
+
+  Future<List<Map<String, dynamic>>> getHydrationHistory(int nutritionId, int days) async {
+    final db = await database;
+    final startDate = DateTime.now().subtract(Duration(days: days));
+    final startDateStr = startDate.toIso8601String().split('T')[0];
+
+    return await db.query(
+      'Hydratation',
+      where: 'nutrition_id = ? AND date_jour >= ?',
+      whereArgs: [nutritionId, startDateStr],
+      orderBy: 'date_jour DESC',
+    );
+  }
+
+  Future<int> updateHydrationEntry({
+    required int hydratationId,
+    required double quantiteBue,
+  }) async {
+    final db = await database;
+    return await db.update(
+      'Hydratation',
+      {'quantite_bue': quantiteBue},
+      where: 'hydratation_id = ?',
+      whereArgs: [hydratationId],
+    );
+  }
+
+  Future<int> deleteHydrationEntry(int hydratationId) async {
+    final db = await database;
+    return await db.delete('Hydratation', where: 'hydratation_id = ?', whereArgs: [hydratationId]);
+  }
+
+  // ActivitePas (Steps Activity) Operations
+  Future<int> addStepsEntry({
+    required int nutritionId,
+    required String dateJour,
+    required int pasFaits,
+  }) async {
+    final db = await database;
+    return await db.insert('ActivitePas', {
+      'nutrition_id': nutritionId,
+      'date_jour': dateJour,
+      'pas_faits': pasFaits,
+    });
+  }
+
+  Future<Map<String, dynamic>?> getStepsForDate(int nutritionId, String date) async {
+    final db = await database;
+    final result = await db.query(
+      'ActivitePas',
+      where: 'nutrition_id = ? AND date_jour = ?',
+      whereArgs: [nutritionId, date],
+      limit: 1,
+    );
+    return result.isNotEmpty ? result.first : null;
+  }
+
+  Future<int> updateStepsForDate({
+    required int nutritionId,
+    required String dateJour,
+    required int pasFaits,
+  }) async {
+    final db = await database;
+    return await db.update(
+      'ActivitePas',
+      {'pas_faits': pasFaits},
+      where: 'nutrition_id = ? AND date_jour = ?',
+      whereArgs: [nutritionId, dateJour],
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getStepsHistory(int nutritionId, int days) async {
+    final db = await database;
+    final startDate = DateTime.now().subtract(Duration(days: days));
+    final startDateStr = startDate.toIso8601String().split('T')[0];
+
+    return await db.query(
+      'ActivitePas',
+      where: 'nutrition_id = ? AND date_jour >= ?',
+      whereArgs: [nutritionId, startDateStr],
+      orderBy: 'date_jour DESC',
+    );
+  }
+
+  Future<int> deleteStepsEntry(int pasId) async {
+    final db = await database;
+    return await db.delete('ActivitePas', where: 'pas_id = ?', whereArgs: [pasId]);
+  }
+
+  // Utility methods for nutrition data
+  Future<Map<String, dynamic>> getNutritionStats(int nutritionId, String date) async {
+    final db = await database;
+
+    // Get total calories from meals (calculate from individual foods)
+    final mealsFoodsResult = await db.rawQuery('''
+      SELECT SUM(ra.quantite * a.calories) as total_calories, COUNT(DISTINCT r.repas_id) as meal_count
+      FROM Repas r
+      LEFT JOIN Repas_Aliment ra ON r.repas_id = ra.repas_id
+      LEFT JOIN Aliment a ON ra.aliment_id = a.aliment_id
+      WHERE r.nutrition_id = ? AND r.date_repas = ?
+    ''', [nutritionId, date]);
+
+    // Get total hydration
+    final hydrationTotal = await getTotalHydrationForDate(nutritionId, date);
+
+    // Get steps
+    final stepsResult = await getStepsForDate(nutritionId, date);
+
+    return {
+      'total_calories': mealsFoodsResult.first['total_calories'] as double? ?? 0.0,
+      'meal_count': mealsFoodsResult.first['meal_count'] as int? ?? 0,
+      'total_hydration': hydrationTotal,
+      'steps': stepsResult?['pas_faits'] as int? ?? 0,
+    };
+  }
 }

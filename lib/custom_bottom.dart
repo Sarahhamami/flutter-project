@@ -4,6 +4,8 @@ import 'package:flutter_application_1/actPhy/onboarding/onboarding_screen.dart';
 import 'package:flutter_application_1/com/articles_display.dart';
 import 'package:flutter_application_1/com/friends_list_page.dart';
 import 'package:flutter_application_1/db/database_helper.dart';
+import 'package:flutter_application_1/models/nutrition_profile.dart';
+import 'package:flutter_application_1/pages/nutrition_profile_page.dart';
 import 'package:flutter_application_1/sos/admin_menu_page.dart';
 import 'package:flutter_application_1/sos/emergency_service.dart';
 import 'package:flutter_application_1/sos/first_aid_chatbot_page.dart';
@@ -371,6 +373,12 @@ class BottomNavBar extends StatelessWidget {
                 
             break;
 
+              case 9:
+            Navigator.push(
+                context, MaterialPageRoute(builder: (_) => const NutritionProfilePage()));
+                
+            break;
+
         }
       },
       items: const [
@@ -391,6 +399,8 @@ class BottomNavBar extends StatelessWidget {
             icon: Icon(Icons.health_and_safety), label: 'Wellness'),
             BottomNavigationBarItem(
             icon: Icon(Icons.sports_gymnastics), label: 'Fitness'),
+             BottomNavigationBarItem(
+            icon: Icon(Icons.fastfood), label: 'Nutrition'),
       ],
     );
   }
