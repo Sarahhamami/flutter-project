@@ -45,5 +45,17 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs access to your location to show maps and track your position.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>This app needs access to your location to provide location-based services.</string>
+	<key>io.flutter.embedded_views_preview</key>
+	<true/>
+	<key>NSLocalNotificationsUsageDescription</key>
+	<string>This app uses notifications to remind you about your nutrition goals and habits.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs access to your location to show maps and track your position.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>This app needs access to your location to provide location-based services.</string>
 </dict>
 </plist>
