@@ -3,8 +3,7 @@ import 'package:mailer/smtp_server/gmail.dart';
 
 class EmailService {
   static Future<bool> sendOtp(String email, String otp) async {
-    final username = 'alatheiri123@gmail.com';
-    final password = 'tagj erie tymz atol'; // Gmail App password
+    / Gmail App password
 
     final smtpServer = gmail(username, password);
 
